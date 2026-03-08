@@ -1,0 +1,204 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Search, Plus, LayoutGrid, Tags } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { productsApi, categoriesApi } from "@/lib/api";
+import { useSession } from "@/lib/auth-client";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
+import { useCart } from "@/lib/cart-context";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { ModeToggle } from "@/components/mode-toggle";
+import { Separator } from "@/components/ui/separator";
+
+export default function POSPage() {
+    const { data: session } = useSession();
+    const [products, setProducts] = useState<any[]>([]);
+    const [categories, setCategories] = useState<any[]>([]);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [selectedCategory, setSelectedCategory] = useState<string>("All");
+    const { addToCart } = useCart();
+
+    const businessId = (session?.user as any)?.activeBusinessId;
+
+    useEffect(() => {
+        if (businessId) {
+            fetchProducts();
+            fetchCategories();
+        }
+    }, [businessId]);
+
+    const fetchCategories = async () => {
+        try {
+            const data = await categoriesApi.getAll(businessId);
+            setCategories(data);
+        } catch (error) {
+            console.error("Failed to fetch categories:", error);
+        }
+    };
+
+    const fetchProducts = async () => {
+        try {
+            const data = await productsApi.getAll(businessId);
+            setProducts(data);
+        } catch (error) {
+            console.error("Failed to fetch products:", error);
+        }
+    };
+
+    const filteredProducts = products.filter((p) => {
+        const matchesSearch =
+            p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.category?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+
+        const matchesCategory =
+            selectedCategory === "All" || p.category?.name === selectedCategory;
+
+        return matchesSearch && matchesCategory;
+    });
+
+    return (
+        <div className="flex flex-col h-full min-h-0 bg-background animate-in fade-in duration-500">
+
+            {/* Header */}
+            <header className="flex h-16 shrink-0 items-center gap-2 border-b px-6">
+                <SidebarTrigger className="-ml-1" />
+                <Separator orientation="vertical" className="mr-2 h-4" />
+                <div className="flex flex-1 items-center justify-between">
+                    <h1 className="text-lg font-semibold">POS Terminal</h1>
+                    <ModeToggle />
+                </div>
+            </header>
+
+            {/* Content Wrapper */}
+            <div className="flex flex-col flex-1 min-h-0">
+
+                {/* Search + Categories */}
+                <div className="px-6 py-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10 space-y-4 shrink-0">
+
+                    {/* Search */}
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
+                        <Input
+                            placeholder="Search products by name or category..."
+                            className="pl-10 h-10 bg-muted/50 border-none rounded-xl focus-visible:ring-1 focus-visible:ring-primary/20 shadow-sm"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+
+                    {/* Categories */}
+                    <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+                        <button
+                            onClick={() => setSelectedCategory("All")}
+                            className={cn(
+                                "flex flex-col items-center justify-center min-w-[80px] h-[80px] rounded-xl transition-all gap-1.5 border shrink-0",
+                                selectedCategory === "All"
+                                    ? "bg-primary text-primary-foreground border-primary shadow-lg"
+                                    : "bg-card text-muted-foreground border-border hover:border-primary/40"
+                            )}
+                        >
+                            <LayoutGrid className="h-5 w-5" />
+                            <span className="text-[10px] font-black uppercase tracking-tighter">
+                                All Items
+                            </span>
+                        </button>
+
+                        {categories.map((cat) => (
+                            <button
+                                key={cat.id}
+                                onClick={() => setSelectedCategory(cat.name)}
+                                className={cn(
+                                    "flex flex-col items-center justify-center min-w-[80px] h-[80px] rounded-xl transition-all gap-1.5 border shrink-0",
+                                    selectedCategory === cat.name
+                                        ? "bg-primary text-primary-foreground border-primary shadow-lg"
+                                        : "bg-card text-muted-foreground border-border hover:border-primary/40"
+                                )}
+                            >
+                                <Tags className="h-5 w-5" />
+                                <span className="text-[10px] font-black uppercase tracking-tighter truncate max-w-[70px]">
+                                    {cat.name}
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Products Scroll Section */}
+                <ScrollArea className="flex-1 min-h-0 px-6">
+                    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 py-4 pb-6">
+                        {filteredProducts.map((product) => (
+                            <div
+                                key={product.id}
+                                onClick={() =>
+                                    product.stockQuantity > 0 && addToCart(product)
+                                }
+                                className={cn(
+                                    "group relative flex flex-col bg-card hover:bg-accent/50 transition-all rounded-2xl cursor-pointer shadow-sm hover:shadow-xl border border-border/50 hover:border-primary/20 active:scale-[0.98] duration-300",
+                                    product.stockQuantity === 0 &&
+                                    "opacity-60 cursor-not-allowed grayscale"
+                                )}
+                            >
+                                <div className="aspect-[4/3] relative flex items-center justify-center bg-muted/30">
+                                    <span className="text-6xl font-black text-muted-foreground/10 uppercase select-none">
+                                        {product.name.charAt(0)}
+                                    </span>
+
+                                    {/* Stock Badges */}
+                                    <div className="absolute top-3 left-3 flex flex-col gap-1">
+                                        {product.stockQuantity < 10 &&
+                                            product.stockQuantity > 0 && (
+                                                <Badge
+                                                    variant="outline"
+                                                    className="text-[8px] font-black uppercase"
+                                                >
+                                                    Only {product.stockQuantity} Ready
+                                                </Badge>
+                                            )}
+
+                                        {product.stockQuantity === 0 && (
+                                            <Badge
+                                                variant="destructive"
+                                                className="text-[8px] font-black uppercase"
+                                            >
+                                                Sold Out
+                                            </Badge>
+                                        )}
+                                    </div>
+
+                                    {/* Hover Icon */}
+                                    <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <div className="bg-primary text-primary-foreground p-3 rounded-full shadow-lg">
+                                            <Plus className="h-6 w-6 stroke-[3]" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="p-4 flex flex-col gap-1">
+                                    <span className="text-[9px] text-primary/60 font-black uppercase tracking-[0.1em]">
+                                        {product.category?.name || "General"}
+                                    </span>
+
+                                    <h3 className="font-bold text-sm line-clamp-1">
+                                        {product.name}
+                                    </h3>
+
+                                    <div className="flex items-center justify-between mt-auto">
+                                        <span className="text-xl font-black">
+                                            ${product.sellingPrice}
+                                        </span>
+                                        <span className="text-[10px] font-bold text-muted-foreground">
+                                            Stock: {product.stockQuantity}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </ScrollArea>
+            </div>
+        </div>
+    );
+}
