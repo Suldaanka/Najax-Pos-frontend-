@@ -41,6 +41,7 @@ import { useSession } from "@/lib/auth-client";
 export default function StaffPage() {
     const { data: session } = useSession();
     const [staff, setStaff] = useState<any[]>([]);
+    const [invitations, setInvitations] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isInviteOpen, setIsInviteOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -49,17 +50,21 @@ export default function StaffPage() {
 
     useEffect(() => {
         if (businessId) {
-            fetchStaff();
+            fetchData();
         }
     }, [businessId]);
 
-    const fetchStaff = async () => {
+    const fetchData = async () => {
         setLoading(true);
         try {
-            const data = await staffApi.getAll(businessId);
-            setStaff(data);
+            const [staffData, inviteData] = await Promise.all([
+                staffApi.getAll(businessId),
+                invitationsApi.getAll(businessId)
+            ]);
+            setStaff(staffData);
+            setInvitations(inviteData.invitations || []);
         } catch (error: any) {
-            toast.error("Failed to fetch staff: " + error.message);
+            toast.error("Failed to fetch data: " + error.message);
         } finally {
             setLoading(false);
         }
@@ -101,17 +106,28 @@ export default function StaffPage() {
                 role,
                 businessId
             });
-            toast.success("Invitation sent successfully");
+            toast.success("Invitation processed successfully");
             setIsInviteOpen(false);
+            fetchData();
         } catch (error: any) {
             toast.error("Failed to send invitation: " + error.message);
+        }
+    };
+
+    const handleRevokeInvitation = async (id: string) => {
+        try {
+            await invitationsApi.delete(id);
+            fetchData();
+            toast.success("Invitation revoked");
+        } catch (error: any) {
+            toast.error("Failed to revoke invitation: " + error.message);
         }
     };
 
     const handleDeleteStaff = async (id: string) => {
         try {
             await staffApi.remove(id);
-            fetchStaff();
+            fetchData();
             toast.success("Staff member removed");
         } catch (error: any) {
             toast.error("Failed to remove staff: " + error.message);
@@ -203,15 +219,8 @@ export default function StaffPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {loading ? (
-                            <TableRow>
-                                <TableCell colSpan={5} className="text-center py-10">Loading staff...</TableCell>
-                            </TableRow>
-                        ) : filteredStaff.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={5} className="text-center py-10">No staff found.</TableCell>
-                            </TableRow>
-                        ) : filteredStaff.map((member) => (
+                        {/* Show Active Staff */}
+                        {staff.map((member) => (
                             <TableRow key={member.id}>
                                 <TableCell className="flex items-center gap-3">
                                     <Avatar className="h-8 w-8">
@@ -245,9 +254,6 @@ export default function StaffPage() {
                                             <DropdownMenuItem>
                                                 <Pencil className="mr-2 h-4 w-4" /> Manage Permissions
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem>
-                                                <Mail className="mr-2 h-4 w-4" /> Resend Invite
-                                            </DropdownMenuItem>
                                             <DropdownMenuItem
                                                 className="text-destructive"
                                                 onClick={() => handleDeleteStaff(member.id)}
@@ -260,6 +266,57 @@ export default function StaffPage() {
                                 </TableCell>
                             </TableRow>
                         ))}
+
+                        {/* Show Pending Invitations */}
+                        {invitations
+                            .filter(inv => inv.status === 'PENDING')
+                            .map((invite) => (
+                                <TableRow key={invite.id} className="bg-muted/30">
+                                    <TableCell className="flex items-center gap-3">
+                                        <Avatar className="h-8 w-8 opacity-50">
+                                            <AvatarFallback>?</AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex flex-col text-left opacity-70">
+                                            <span className="font-medium">Invitation Sent</span>
+                                            <span className="text-xs text-muted-foreground">{invite.email}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2 opacity-70">
+                                            {invite.role}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline" className="animate-pulse">Pending</Badge>
+                                    </TableCell>
+                                    <TableCell className="opacity-70">{new Date(invite.createdAt).toLocaleDateString()}</TableCell>
+                                    <TableCell className="text-right">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon">
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                    <span className="sr-only">Open menu</span>
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                <DropdownMenuItem
+                                                    className="text-destructive"
+                                                    onClick={() => handleRevokeInvitation(invite.id)}
+                                                >
+                                                    <Trash2 className="mr-2 h-4 w-4" /> Revoke Invitation
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+
+                        {(staff.length === 0 && invitations.filter(i => i.status === 'PENDING').length === 0) && (
+                            <TableRow>
+                                <TableCell colSpan={5} className="text-center py-10">No staff or pending invitations found.</TableCell>
+                            </TableRow>
+                        )}
                     </TableBody>
                 </Table>
             </div>
