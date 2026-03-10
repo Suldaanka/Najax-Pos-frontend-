@@ -87,6 +87,13 @@ export default function StaffPage() {
         s.role.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    const filteredInvitations = invitations.filter(i =>
+        i.status === 'PENDING' && (
+            (i.email || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (i.role || "").toLowerCase().includes(searchQuery.toLowerCase())
+        )
+    );
+
     const handleInviteStaff = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!businessId) {
@@ -219,103 +226,113 @@ export default function StaffPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {/* Show Active Staff */}
-                        {staff.map((member) => (
-                            <TableRow key={member.id}>
-                                <TableCell className="flex items-center gap-3">
-                                    <Avatar className="h-8 w-8">
-                                        <AvatarFallback>{member.user?.name?.[0] || "U"}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex flex-col text-left">
-                                        <span className="font-medium">{member.user?.name}</span>
-                                        <span className="text-xs text-muted-foreground">{member.user?.email}</span>
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <div className="flex items-center gap-2">
-                                        {member.role === "OWNER" && <ShieldCheck className="h-3 w-3 text-emerald-500" />}
-                                        {member.role}
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <Badge variant="default">Active</Badge>
-                                </TableCell>
-                                <TableCell>{new Date(member.createdAt).toLocaleDateString()}</TableCell>
-                                <TableCell className="text-right">
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon">
-                                                <MoreHorizontal className="h-4 w-4" />
-                                                <span className="sr-only">Open menu</span>
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                            <DropdownMenuItem>
-                                                <Pencil className="mr-2 h-4 w-4" /> Manage Permissions
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem
-                                                className="text-destructive"
-                                                onClick={() => handleDeleteStaff(member.id)}
-                                                disabled={member.role === "OWNER"}
-                                            >
-                                                <Trash2 className="mr-2 h-4 w-4" /> Remove from Business
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-
-                        {/* Show Pending Invitations */}
-                        {invitations
-                            .filter(inv => inv.status === 'PENDING')
-                            .map((invite) => (
-                                <TableRow key={invite.id} className="bg-muted/30">
-                                    <TableCell className="flex items-center gap-3">
-                                        <Avatar className="h-8 w-8 opacity-50">
-                                            <AvatarFallback>?</AvatarFallback>
-                                        </Avatar>
-                                        <div className="flex flex-col text-left opacity-70">
-                                            <span className="font-medium">Invitation Sent</span>
-                                            <span className="text-xs text-muted-foreground">{invite.email}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-2 opacity-70">
-                                            {invite.role}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline" className="animate-pulse">Pending</Badge>
-                                    </TableCell>
-                                    <TableCell className="opacity-70">{new Date(invite.createdAt).toLocaleDateString()}</TableCell>
-                                    <TableCell className="text-right">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon">
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                    <span className="sr-only">Open menu</span>
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                <DropdownMenuItem
-                                                    className="text-destructive"
-                                                    onClick={() => handleRevokeInvitation(invite.id)}
-                                                >
-                                                    <Trash2 className="mr-2 h-4 w-4" /> Revoke Invitation
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-
-                        {(staff.length === 0 && invitations.filter(i => i.status === 'PENDING').length === 0) && (
+                        {loading ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-10">No staff or pending invitations found.</TableCell>
+                                <TableCell colSpan={5} className="text-center py-10 text-muted-foreground italic">
+                                    Loading team data...
+                                </TableCell>
                             </TableRow>
+                        ) : (
+                            <>
+                                {/* Show Active Staff */}
+                                {filteredStaff.map((member) => (
+                                    <TableRow key={member.id}>
+                                        <TableCell className="flex items-center gap-3">
+                                            <Avatar className="h-8 w-8">
+                                                <AvatarFallback>{member.user?.name?.[0] || "U"}</AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex flex-col text-left">
+                                                <span className="font-medium">{member.user?.name}</span>
+                                                <span className="text-xs text-muted-foreground">{member.user?.email}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                {member.role === "OWNER" && <ShieldCheck className="h-3 w-3 text-emerald-500" />}
+                                                {member.role}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant="default">Active</Badge>
+                                        </TableCell>
+                                        <TableCell>{new Date(member.createdAt).toLocaleDateString()}</TableCell>
+                                        <TableCell className="text-right">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon">
+                                                        <MoreHorizontal className="h-4 w-4" />
+                                                        <span className="sr-only">Open menu</span>
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                    <DropdownMenuItem>
+                                                        <Pencil className="mr-2 h-4 w-4" /> Manage Permissions
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        className="text-destructive"
+                                                        onClick={() => handleDeleteStaff(member.id)}
+                                                        disabled={member.role === "OWNER"}
+                                                    >
+                                                        <Trash2 className="mr-2 h-4 w-4" /> Remove from Business
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+
+                                {/* Show Pending Invitations */}
+                                {filteredInvitations.map((invite) => (
+                                    <TableRow key={invite.id} className="bg-muted/30">
+                                        <TableCell className="flex items-center gap-3">
+                                            <Avatar className="h-8 w-8 opacity-50">
+                                                <AvatarFallback>?</AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex flex-col text-left opacity-70">
+                                                <span className="font-medium text-amber-600/80">Pending Invitation</span>
+                                                <span className="text-xs text-muted-foreground">{invite.email}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2 opacity-70">
+                                                {invite.role}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline" className="animate-pulse border-amber-500/50 text-amber-600">Pending</Badge>
+                                        </TableCell>
+                                        <TableCell className="opacity-70">{new Date(invite.createdAt).toLocaleDateString()}</TableCell>
+                                        <TableCell className="text-right">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon">
+                                                        <MoreHorizontal className="h-4 w-4" />
+                                                        <span className="sr-only">Open menu</span>
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                    <DropdownMenuItem
+                                                        className="text-destructive"
+                                                        onClick={() => handleRevokeInvitation(invite.id)}
+                                                    >
+                                                        <Trash2 className="mr-2 h-4 w-4" /> Revoke Invitation
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+
+                                {(filteredStaff.length === 0 && filteredInvitations.length === 0) && (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                                            No staff members or pending invitations found matching your search.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </>
                         )}
                     </TableBody>
                 </Table>
