@@ -24,6 +24,9 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
         try {
             const error = await response.json();
             errorMessage = error.error || error.message || errorMessage;
+            if (error.details) {
+                errorMessage += ` (${error.details})`;
+            }
         } catch (e) {
             // Fallback for non-JSON errors
             const text = await clonedResponse.text().catch(() => 'Unknown error');
