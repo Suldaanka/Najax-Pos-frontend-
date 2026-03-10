@@ -15,7 +15,9 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 interface DashboardData {
     revenue: number;
+    monthlyRevenue: number;
     expenses: number;
+    monthlyExpenses: number;
     recurringExpenses: number;
     netRevenue: number;
     totalSalesCount: number;
