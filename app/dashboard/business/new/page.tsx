@@ -26,6 +26,28 @@ export default function CreateBusinessPage() {
         phone: "",
     });
 
+    // Auto-detect if user was invited and already has a business membership
+    useEffect(() => {
+        let isMounted = true;
+        const checkMemberships = async () => {
+            try {
+                const businesses = await businessApi.list();
+                if (isMounted && businesses.length > 0) {
+                    console.log("Found existing memberships, auto-redirecting...");
+                    // If they have at least one business, switch to it and go to dashboard
+                    await businessApi.switch(businesses[0].id);
+                    router.push("/dashboard");
+                    toast.success(`Welcome back! Switching to ${businesses[0].name}`);
+                }
+            } catch (error) {
+                console.error("Failed to check memberships:", error);
+            }
+        };
+
+        checkMemberships();
+        return () => { isMounted = false; };
+    }, [router]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
