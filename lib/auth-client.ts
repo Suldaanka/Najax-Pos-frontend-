@@ -1,10 +1,11 @@
 import { createAuthClient } from "better-auth/react";
 
-// Use the backend URL directly to avoid proxy issues and ENOTFOUND/ECONNRESET errors.
-const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://najax-pos-production.up.railway.app";
+// Point to the same domain (Netlify) so cookies are first-party.
+// Netlify.toml will proxy these requests to Railway.
+const frontendURL = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000");
 
 export const authClient = createAuthClient({
-    baseURL: backendURL,
+    baseURL: frontendURL,
 });
 
 export const { signIn, signOut, signUp, useSession } = authClient;

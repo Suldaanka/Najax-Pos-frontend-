@@ -5,6 +5,12 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
+[[redirects]]
+  from = "/api/auth/*"
+  to = "https://najax-pos-production.up.railway.app/api/auth/:splat"
+  status = 200
+  force = true
+
 [build.environment]
   NODE_VERSION = "20"
 
