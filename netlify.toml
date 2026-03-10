@@ -6,8 +6,8 @@
   package = "@netlify/plugin-nextjs"
 
 [[redirects]]
-  from = "/api/auth/*"
-  to = "https://najax-pos-production.up.railway.app/api/auth/:splat"
+  from = "/api/*"
+  to = "https://najax-pos-production.up.railway.app/api/:splat"
   status = 200
   force = true
 
