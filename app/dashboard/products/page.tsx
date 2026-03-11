@@ -56,6 +56,10 @@ export default function ProductsPage() {
     const [searchQuery, setSearchQuery] = useState("");
 
     const [addForm, setAddForm] = useState({
+        name: "",
+        categoryId: "",
+        price: 0,
+        barcode: "",
         costPrice: 0,
         trackCartons: false,
         cartons: 0,
@@ -65,6 +69,10 @@ export default function ProductsPage() {
     });
 
     const [editForm, setEditForm] = useState({
+        name: "",
+        categoryId: "",
+        price: 0,
+        barcode: "",
         costPrice: 0,
         trackCartons: false,
         cartons: 0,
@@ -121,18 +129,13 @@ export default function ProductsPage() {
 
     const handleAddProduct = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-
-        const totalStock = addForm.trackCartons
-            ? (addForm.cartons * addForm.piecesPerCarton) + addForm.loosePieces
-            : addForm.stock;
-
         const data = {
             businessId,
-            name: formData.get("name") as string,
-            categoryId: formData.get("categoryId") as string,
+            name: addForm.name,
+            categoryId: addForm.categoryId,
+            barcode: addForm.barcode,
             costPrice: addForm.costPrice,
-            sellingPrice: parseFloat(formData.get("price") as string),
+            sellingPrice: addForm.price,
             stockQuantity: totalStock,
             piecesPerCarton: addForm.trackCartons ? addForm.piecesPerCarton : null,
         };
@@ -141,7 +144,7 @@ export default function ProductsPage() {
             await productsApi.create(data);
             fetchProducts();
             setIsAddOpen(false);
-            setAddForm({ costPrice: 0, trackCartons: false, cartons: 0, piecesPerCarton: 0, loosePieces: 0, stock: 0 }); // reset
+            setAddForm({ name: "", categoryId: "", price: 0, barcode: "", costPrice: 0, trackCartons: false, cartons: 0, piecesPerCarton: 0, loosePieces: 0, stock: 0 }); // reset
             toast.success("Product added successfully");
         } catch (error: any) {
             toast.error("Failed to add product: " + error.message);
@@ -150,17 +153,12 @@ export default function ProductsPage() {
 
     const handleEditProduct = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-
-        const totalStock = editForm.trackCartons
-            ? (editForm.cartons * editForm.piecesPerCarton) + editForm.loosePieces
-            : editForm.stock;
-
         const data = {
-            name: formData.get("name") as string,
-            categoryId: formData.get("categoryId") as string,
+            name: editForm.name,
+            categoryId: editForm.categoryId,
+            barcode: editForm.barcode,
             costPrice: editForm.costPrice,
-            sellingPrice: parseFloat(formData.get("price") as string),
+            sellingPrice: editForm.price,
             stockQuantity: totalStock,
             piecesPerCarton: editForm.trackCartons ? editForm.piecesPerCarton : null,
         };
@@ -230,13 +228,35 @@ export default function ProductsPage() {
                                 </DialogHeader>
                                 <div className="grid gap-4 py-4">
                                     <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label htmlFor="barcode" className="text-right">Barcode</Label>
+                                        <Input 
+                                            id="barcode" 
+                                            name="barcode" 
+                                            placeholder="Scan or type barcode"
+                                            className="col-span-3" 
+                                            value={addForm.barcode}
+                                            onChange={(e) => setAddForm({ ...addForm, barcode: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-4 items-center gap-4">
                                         <Label htmlFor="name" className="text-right">Name</Label>
-                                        <Input id="name" name="name" className="col-span-3" required />
+                                        <Input 
+                                            id="name" 
+                                            name="name" 
+                                            className="col-span-3" 
+                                            required 
+                                            value={addForm.name}
+                                            onChange={(e) => setAddForm({ ...addForm, name: e.target.value })}
+                                        />
                                     </div>
                                     <div className="grid grid-cols-4 items-center gap-4">
                                         <Label htmlFor="categoryId" className="text-right">Category</Label>
                                         <div className="col-span-3">
-                                            <Select name="categoryId">
+                                            <Select 
+                                                name="categoryId" 
+                                                value={addForm.categoryId}
+                                                onValueChange={(val) => setAddForm({ ...addForm, categoryId: val })}
+                                            >
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Select category" />
                                                 </SelectTrigger>
@@ -327,7 +347,15 @@ export default function ProductsPage() {
                                     <div className="grid grid-cols-4 items-center gap-4">
                                         <Label htmlFor="price" className="text-right">Selling Price ($)</Label>
                                         <div className="col-span-3 space-y-1">
-                                            <Input id="price" name="price" type="number" step="0.01" required />
+                                            <Input 
+                                                id="price" 
+                                                name="price" 
+                                                type="number" 
+                                                step="0.01" 
+                                                required 
+                                                value={addForm.price || ""}
+                                                onChange={(e) => setAddForm({ ...addForm, price: parseFloat(e.target.value) || 0 })}
+                                            />
                                             {(() => {
                                                 const totalStock = addForm.trackCartons
                                                     ? (addForm.cartons * addForm.piecesPerCarton) + addForm.loosePieces
@@ -431,6 +459,10 @@ export default function ProductsPage() {
                                             <DropdownMenuItem onClick={() => {
                                                 setEditingProduct(product);
                                                 setEditForm({
+                                                    name: product.name,
+                                                    categoryId: product.categoryId || "",
+                                                    price: Number(product.sellingPrice) || 0,
+                                                    barcode: product.barcode || "",
                                                     costPrice: Number(product.costPrice) || 0,
                                                     trackCartons: !!product.piecesPerCarton,
                                                     cartons: product.piecesPerCarton ? Math.floor(product.stockQuantity / product.piecesPerCarton) : 0,
@@ -476,13 +508,34 @@ export default function ProductsPage() {
                             </DialogHeader>
                             <div className="grid gap-4 py-4">
                                 <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="edit-barcode" className="text-right">Barcode</Label>
+                                    <Input 
+                                        id="edit-barcode" 
+                                        name="barcode" 
+                                        value={editForm.barcode} 
+                                        onChange={(e) => setEditForm({ ...editForm, barcode: e.target.value })}
+                                        className="col-span-3" 
+                                    />
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
                                     <Label htmlFor="edit-name" className="text-right">Name</Label>
-                                    <Input id="edit-name" name="name" defaultValue={editingProduct.name} className="col-span-3" required />
+                                    <Input 
+                                        id="edit-name" 
+                                        name="name" 
+                                        value={editForm.name} 
+                                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                                        className="col-span-3" 
+                                        required 
+                                    />
                                 </div>
                                 <div className="grid grid-cols-4 items-center gap-4">
                                     <Label htmlFor="edit-categoryId" className="text-right">Category</Label>
                                     <div className="col-span-3">
-                                        <Select name="categoryId" defaultValue={editingProduct.categoryId}>
+                                        <Select 
+                                            name="categoryId" 
+                                            value={editForm.categoryId}
+                                            onValueChange={(val) => setEditForm({ ...editForm, categoryId: val })}
+                                        >
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select category" />
                                             </SelectTrigger>
@@ -570,17 +623,18 @@ export default function ProductsPage() {
                                         />
                                     </div>
                                 )}
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="edit-price" className="text-right">Selling Price ($)</Label>
-                                    <div className="col-span-3 space-y-1">
-                                        <Input
-                                            id="edit-price"
-                                            name="price"
-                                            type="number"
-                                            step="0.01"
-                                            defaultValue={editingProduct.sellingPrice}
-                                            required
-                                        />
+                                    <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label htmlFor="edit-price" className="text-right">Selling Price ($)</Label>
+                                        <div className="col-span-3 space-y-1">
+                                            <Input
+                                                id="edit-price"
+                                                name="price"
+                                                type="number"
+                                                step="0.01"
+                                                value={editForm.price || ""}
+                                                onChange={(e) => setEditForm({ ...editForm, price: parseFloat(e.target.value) || 0 })}
+                                                required
+                                            />
                                         {(() => {
                                             const totalStock = editForm.trackCartons
                                                 ? (editForm.cartons * editForm.piecesPerCarton) + editForm.loosePieces

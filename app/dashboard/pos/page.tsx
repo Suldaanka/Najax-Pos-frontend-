@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Search, Plus, LayoutGrid, Tags } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import { productsApi, categoriesApi } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -51,13 +52,80 @@ export default function POSPage() {
     const filteredProducts = products.filter((p) => {
         const matchesSearch =
             p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            p.category?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+            p.category?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (p.barcode && p.barcode.includes(searchQuery));
 
         const matchesCategory =
             selectedCategory === "All" || p.category?.name === selectedCategory;
 
         return matchesSearch && matchesCategory;
     });
+
+    // Barcode Scanning Logic
+    useEffect(() => {
+        let buffer = "";
+        let lastKeyTime = Date.now();
+
+        const playBeep = () => {
+            try {
+                const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                oscillator.type = "sine";
+                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+
+                oscillator.start(audioCtx.currentTime);
+                oscillator.stop(audioCtx.currentTime + 0.1);
+            } catch (e) {
+                console.warn("Audio feedback failed:", e);
+            }
+        };
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Ignore if typing in an input field (except if it's the specific barcode scanner)
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+                return;
+            }
+
+            const currentTime = Date.now();
+            
+            // If the time between keypresses is too long, it's likely manual typing, not a scanner
+            if (currentTime - lastKeyTime > 50) {
+                buffer = "";
+            }
+            
+            lastKeyTime = currentTime;
+
+            if (e.key === "Enter") {
+                if (buffer.length > 2) {
+                    const product = products.find(p => p.barcode === buffer);
+                    if (product) {
+                        if (product.stockQuantity > 0) {
+                            addToCart(product);
+                            playBeep();
+                        } else {
+                            toast.error(`${product.name} is out of stock`);
+                        }
+                    } else {
+                        toast.error(`No product found with barcode: ${buffer}`);
+                    }
+                }
+                buffer = "";
+            } else if (e.key.length === 1) {
+                buffer += e.key;
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [products, addToCart]);
 
     return (
         <div className="flex flex-col h-full min-h-0 bg-background animate-in fade-in duration-500">
