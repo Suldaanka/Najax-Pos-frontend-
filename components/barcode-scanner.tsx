@@ -1,15 +1,13 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import { Html5QrcodeScanner, Html5QrcodeSupportedFormats } from "html5-qrcode";
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
 
 interface BarcodeScannerProps {
     onScanSuccess: (decodedText: string) => void;
     onScanFailure?: (error: string) => void;
     fps?: number;
     qrbox?: number | { width: number; height: number };
-    aspectRatio?: number;
-    disableFlip?: boolean;
 }
 
 const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
@@ -17,57 +15,72 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     onScanFailure,
     fps = 10,
     qrbox = 250,
-    aspectRatio = 1.0,
-    disableFlip = false,
 }) => {
-    const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+    const scannerRef = useRef<Html5Qrcode | null>(null);
 
     useEffect(() => {
-        // Initialize scanner
-        const scanner = new Html5QrcodeScanner(
-            "reader",
-            {
-                fps,
-                qrbox,
-                aspectRatio,
-                disableFlip,
-                formatsToSupport: [
-                    Html5QrcodeSupportedFormats.EAN_13,
-                    Html5QrcodeSupportedFormats.EAN_8,
-                    Html5QrcodeSupportedFormats.CODE_128,
-                    Html5QrcodeSupportedFormats.CODE_39,
-                    Html5QrcodeSupportedFormats.UPC_A,
-                    Html5QrcodeSupportedFormats.UPC_E,
-                    Html5QrcodeSupportedFormats.QR_CODE,
-                ],
-            },
-            false
-        );
+        const html5QrCode = new Html5Qrcode("reader");
+        scannerRef.current = html5QrCode;
 
-        scanner.render(
+        const config = { 
+            fps, 
+            qrbox,
+            formatsToSupport: [
+                Html5QrcodeSupportedFormats.EAN_13,
+                Html5QrcodeSupportedFormats.EAN_8,
+                Html5QrcodeSupportedFormats.CODE_128,
+                Html5QrcodeSupportedFormats.CODE_39,
+                Html5QrcodeSupportedFormats.UPC_A,
+                Html5QrcodeSupportedFormats.UPC_E,
+                Html5QrcodeSupportedFormats.QR_CODE,
+            ]
+        };
+
+        html5QrCode.start(
+            { facingMode: "environment" },
+            config,
             (decodedText) => {
                 onScanSuccess(decodedText);
             },
-            (error) => {
-                if (onScanFailure) onScanFailure(error);
+            (errorMessage) => {
+                if (onScanFailure) onScanFailure(errorMessage);
             }
-        );
+        ).catch((err) => {
+            console.error("Camera start error:", err);
+            // Fallback to default camera if environment fails
+            html5QrCode.start(
+                { facingMode: "user" },
+                config,
+                onScanSuccess,
+                onScanFailure
+            );
+        });
 
-        scannerRef.current = scanner;
-
-        // Cleanup on unmount
         return () => {
             if (scannerRef.current) {
-                scannerRef.current.clear().catch(err => console.error("Scanner cleanup error:", err));
+                scannerRef.current.stop().catch(err => {
+                    // Ignore already stopped error
+                    if (!err?.includes("not scanning")) {
+                        console.error("Scanner stop error:", err);
+                    }
+                });
             }
         };
-    }, [onScanSuccess, onScanFailure, fps, qrbox, aspectRatio, disableFlip]);
+    }, [onScanSuccess, onScanFailure, fps, qrbox]);
 
     return (
-        <div className="w-full max-w-md mx-auto overflow-hidden rounded-lg border border-border bg-muted/30">
-            <div id="reader" className="w-full"></div>
-            <div className="p-2 text-center text-xs text-muted-foreground">
-                Point your camera at a barcode or QR code
+        <div className="relative w-full aspect-square max-w-sm mx-auto overflow-hidden rounded-2xl border-4 border-primary/20 bg-black shadow-2xl">
+            <div id="reader" className="w-full h-full object-cover"></div>
+            
+            {/* Scan Overlay UI */}
+            <div className="absolute inset-0 border-[40px] border-black/40 pointer-events-none">
+                <div className="w-full h-full border-2 border-primary animate-pulse rounded-sm" />
+            </div>
+            
+            <div className="absolute bottom-6 left-0 right-0 text-center z-10">
+                <p className="px-4 py-1.5 bg-black/60 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest inline-block rounded-full border border-white/20">
+                    Scanning for Barcode...
+                </p>
             </div>
         </div>
     );

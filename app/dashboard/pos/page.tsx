@@ -12,8 +12,14 @@ import { cn } from "@/lib/utils";
 import { useCart } from "@/lib/cart-context";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ModeToggle } from "@/components/mode-toggle";
-import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from "@/components/ui/dialog";
 import BarcodeScanner from "@/components/barcode-scanner";
 
 export default function POSPage() {
@@ -185,29 +191,52 @@ export default function POSPage() {
                         </Button>
                     </div>
 
-                    {/* Camera Scanner Area */}
-                    {isCameraOpen && (
-                        <div className="animate-in slide-in-from-top-4 duration-500 overflow-hidden">
-                            <BarcodeScanner 
-                                onScanSuccess={(text: string) => {
-                                    const product = products.find(p => p.barcode === text);
-                                    if (product) {
-                                        if (product.stockQuantity > 0) {
-                                            addToCart(product);
-                                            // Audio feedback is already in the global effect, 
-                                            // but we'll manually play it here if needed or use toast
-                                            toast.success(`${product.name} added via camera`);
+                    {/* Camera Scanner Modal */}
+                    <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
+                        <DialogContent className="sm:max-w-md border-none bg-background/80 backdrop-blur-2xl shadow-2xl p-0 overflow-hidden">
+                            <DialogHeader className="p-6 pb-2">
+                                <DialogTitle className="text-xl font-black uppercase tracking-tight text-primary flex items-center gap-2">
+                                    <Camera className="h-5 w-5" />
+                                    Scan Product
+                                </DialogTitle>
+                                <DialogDescription className="text-[10px] font-bold uppercase tracking-widest opacity-60">
+                                    Point camera at product barcode
+                                </DialogDescription>
+                            </DialogHeader>
+                            
+                            <div className="p-6">
+                                <BarcodeScanner 
+                                    onScanSuccess={(text: string) => {
+                                        const product = products.find(p => p.barcode === text);
+                                        if (product) {
+                                            if (product.stockQuantity > 0) {
+                                                addToCart(product);
+                                                toast.success(`Scanned: ${product.name}`, {
+                                                    description: "Added to cart successfully",
+                                                    position: "bottom-center",
+                                                });
+                                                // Keep scanner open for more scans? Or close?
+                                                // User said "every product you add show as toast in bottom"
+                                                // Usually in POS you want to keep scanning, but the requirement said "modal or popup"
+                                                // I'll keep it open for multi-scan but close it if they want.
+                                                // Actually, let's close it to avoid accidental multi-scans of the same item too fast.
+                                                setIsCameraOpen(false);
+                                            } else {
+                                                toast.error(`${product.name} is out of stock`);
+                                            }
                                         } else {
-                                            toast.error(`${product.name} is out of stock`);
+                                            toast.error(`Unrecognized barcode: ${text}`);
                                         }
-                                    } else {
-                                        toast.error(`Not found: ${text}`);
-                                    }
-                                    setIsCameraOpen(false);
-                                }}
-                            />
-                        </div>
-                    )}
+                                    }}
+                                />
+                            </div>
+                            <div className="p-4 bg-muted/30 border-t border-border flex justify-center">
+                                <Button variant="ghost" onClick={() => setIsCameraOpen(false)} className="text-[10px] font-black uppercase tracking-widest h-8">
+                                    Cancel Scanning
+                                </Button>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
 
                     {/* Categories */}
                     <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
