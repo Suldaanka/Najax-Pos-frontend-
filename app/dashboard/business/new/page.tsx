@@ -92,173 +92,189 @@ export default function CreateBusinessPage() {
     };
 
     return (
-        <div className="relative flex min-h-screen items-center justify-center p-6 bg-background overflow-hidden">
+        <div className="relative flex min-h-screen items-center justify-center p-6 bg-background overflow-hidden flex-col">
             {/* Background elements for premium feel */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 bg-[radial-gradient(circle_at_20%_20%,hsl(var(--primary)/0.03),transparent_40%),radial-gradient(circle_at_80%_80%,hsl(var(--primary)/0.05),transparent_40%)]" />
             
-            <div className="w-full max-w-lg flex flex-col gap-8 animate-in fade-in zoom-in duration-700">
-                <div className="flex flex-col items-center text-center space-y-2 mb-2">
-                    <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 shadow-inner">
-                        <Building2 className="h-8 w-8 text-primary" />
+            <div className="w-full max-w-6xl flex flex-col gap-12 animate-in fade-in zoom-in duration-700">
+                <div className="flex flex-col items-center text-center space-y-4 mb-4">
+                    <div className="h-16 w-16 rounded-3xl bg-primary/10 flex items-center justify-center mb-2 shadow-[inset_0_0_20px_rgba(var(--primary-rgb),0.1)] border border-primary/20">
+                        <Building2 className="h-9 w-9 text-primary" />
                     </div>
-                    <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl bg-gradient-to-b from-foreground to-foreground/60 bg-clip-text text-transparent">
-                        Welcome to Najax
-                    </h1>
-                    <p className="text-muted-foreground text-lg max-w-[320px]">
-                        Set up your workspace to start managing your business efficiently.
-                    </p>
+                    <div className="space-y-1">
+                        <h1 className="text-4xl md:text-5xl font-black tracking-tight bg-gradient-to-b from-foreground to-foreground/50 bg-clip-text text-transparent">
+                            Get Started with Najax
+                        </h1>
+                        <p className="text-muted-foreground text-lg max-w-xl mx-auto">
+                            Choose how you'd like to begin. Join an existing team or launch your own business platform in seconds.
+                        </p>
+                    </div>
                 </div>
 
-                {myInvitations.length > 0 && (
-                    <div className="animate-in slide-in-from-bottom duration-500 stagger-1 translate-y-[-10px]">
-                        <Card className="border-primary/10 bg-card/40 backdrop-blur-xl shadow-2xl relative overflow-hidden group">
-                            <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-amber-500 to-amber-600 shadow-[0_0_15px_rgba(245,158,11,0.3)]" />
-                            <CardHeader className="pb-3">
-                                <CardTitle className="text-xl flex items-center gap-2.5 font-bold">
-                                    <Mail className="h-5 w-5 text-amber-500" /> 
-                                    <span>Pending Invitations</span>
-                                </CardTitle>
-                                <CardDescription className="text-sm font-medium">
-                                    You've been invited to collaborate with others.
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+                    {/* Left Column: Invitations */}
+                    <div className="flex flex-col">
+                        <Card className="flex-1 border-primary/10 bg-card/40 backdrop-blur-xl shadow-2xl relative overflow-hidden group border-t-4 border-t-amber-500/50">
+                            <CardHeader className="pb-6">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                                        <Mail className="h-5 w-5 text-amber-500" />
+                                    </div>
+                                    <CardTitle className="text-2xl font-bold italic tracking-tight uppercase">
+                                        Join a Team
+                                    </CardTitle>
+                                </div>
+                                <CardDescription className="text-base">
+                                    {myInvitations.length > 0 
+                                        ? "You have active invitations waiting for your response." 
+                                        : "Looking for an invitation? They will appear here once sent to your email."}
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent className="space-y-4">
-                                {myInvitations.map((invite) => (
-                                    <div key={invite.id} className="group/item flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-primary/5 hover:border-amber-500/20 hover:bg-muted/50 transition-all cursor-default">
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-10 w-10 rounded-lg bg-background flex items-center justify-center border border-primary/10 group-hover/item:scale-110 transition-transform">
-                                                <Store className="h-5 w-5 text-amber-500" />
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-sm tracking-tight">{invite.business.name}</span>
-                                                <div className="flex items-center gap-1.5 mt-0.5">
-                                                    <span className="text-[10px] uppercase font-bold text-muted-foreground/70 tracking-widest bg-muted rounded px-1.5 py-0.5 border border-primary/5">
-                                                        {invite.role}
+                            <CardContent className="space-y-4 min-h-[300px] flex flex-col justify-start">
+                                {myInvitations.length > 0 ? (
+                                    myInvitations.map((invite) => (
+                                        <div key={invite.id} className="group/item flex items-center justify-between p-5 rounded-2xl bg-muted/20 border border-white/5 hover:border-amber-500/30 hover:bg-muted/40 transition-all shadow-sm">
+                                            <div className="flex items-center gap-4">
+                                                <div className="h-12 w-12 rounded-xl bg-background flex items-center justify-center border border-primary/10 group-hover/item:scale-105 transition-transform shadow-inner">
+                                                    <Store className="h-6 w-6 text-amber-500" />
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-lg tracking-tight">{invite.business.name}</span>
+                                                    <span className="text-xs font-bold text-muted-foreground/60 tracking-widest uppercase">
+                                                        Role: {invite.role}
                                                     </span>
                                                 </div>
                                             </div>
+                                            <Button 
+                                                size="lg" 
+                                                className="rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black shadow-lg shadow-amber-900/20 active:scale-95 transition-all h-12 px-6"
+                                                onClick={() => handleAcceptInvitation(invite.token, invite.business.name)}
+                                                disabled={!!invitationLoading}
+                                            >
+                                                {invitationLoading === invite.token ? (
+                                                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                ) : (
+                                                    <>Join <CheckCircle2 className="ml-2 h-4 w-4" /></>
+                                                )}
+                                            </Button>
                                         </div>
-                                        <Button 
-                                            size="sm" 
-                                            variant="secondary"
-                                            className="h-9 px-5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold shadow-lg shadow-amber-500/10 hover:shadow-amber-500/20 transition-all scale-100 active:scale-95"
-                                            onClick={() => handleAcceptInvitation(invite.token, invite.business.name)}
-                                            disabled={!!invitationLoading}
-                                        >
-                                            <CheckCircle2 className="mr-2 h-3.5 w-3.5" />
-                                            {invitationLoading === invite.token ? "Joining..." : "Accept"}
-                                        </Button>
+                                    ))
+                                ) : (
+                                    <div className="flex-1 flex flex-col items-center justify-center text-center p-8 opacity-40 border-2 border-dashed border-primary/10 rounded-3xl">
+                                        <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                                            <Mail className="h-8 w-8" />
+                                        </div>
+                                        <p className="font-medium text-lg italic">No invitations currently</p>
+                                        <p className="text-sm">Reach out to your administrator to be added to an existing business.</p>
                                     </div>
-                                ))}
+                                )}
                             </CardContent>
                         </Card>
-                        
-                        <div className="relative flex items-center gap-4 my-8">
-                            <Separator className="flex-1 opacity-20" />
-                            <span className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em] px-3 py-1 border rounded-full bg-background relative z-10 shadow-sm">
-                                Or create new
-                            </span>
-                            <Separator className="flex-1 opacity-20" />
+                    </div>
+
+                    {/* Desktop "OR" indicator */}
+                    <div className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
+                        <div className="bg-background border border-primary/10 rounded-full p-4 shadow-xl flex items-center justify-center font-black text-xs tracking-tighter text-muted-foreground/50 rotate-[-10deg] border-dashed">
+                           OR
                         </div>
                     </div>
-                )}
 
-                <Card className="shadow-2xl border-primary/10 bg-card/60 backdrop-blur-md relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-6 opacity-10 pointer-events-none">
-                        <Sparkle className="h-12 w-12 text-primary animate-pulse" />
-                    </div>
-                    <CardHeader className="space-y-1">
-                        <CardTitle className="text-2xl font-bold tracking-tight">
-                            Register Your Business
-                        </CardTitle>
-                        <CardDescription className="text-base">
-                            Start your enterprise journey with a professional profile.
-                        </CardDescription>
-                    </CardHeader>
-                    <form onSubmit={handleSubmit}>
-                        <CardContent className="space-y-6 pt-2">
-                            <div className="grid gap-4">
-                                <div className="space-y-3">
-                                    <Label htmlFor="name" className="text-sm font-semibold ml-1">Business Name</Label>
-                                    <Input
-                                        id="name"
-                                        placeholder="Enter business legal name"
-                                        required
-                                        value={formData.name}
-                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                        className="h-12 px-4 rounded-xl bg-muted/40 border-primary/10 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all text-base"
-                                    />
-                                </div>
-                                <div className="space-y-3">
-                                    <Label htmlFor="type" className="text-sm font-semibold ml-1">Business Type</Label>
-                                    <Select
-                                        value={formData.type}
-                                        onValueChange={(value) => setFormData({ ...formData, type: value })}
-                                    >
-                                        <SelectTrigger className="h-12 rounded-xl bg-muted/40 border-primary/10 focus:ring-primary focus:ring-offset-2 text-base">
-                                            <SelectValue placeholder="Select industry" />
-                                        </SelectTrigger>
-                                        <SelectContent className="rounded-xl border-primary/10 shadow-2xl">
-                                            <SelectItem value="SHOP" className="py-3 focus:bg-primary/5 focus:text-primary">General Shop</SelectItem>
-                                            <SelectItem value="PHARMACY" className="py-3 focus:bg-primary/5 focus:text-primary">Pharmacy</SelectItem>
-                                            <SelectItem value="COSMETICS" className="py-3 focus:bg-primary/5 focus:text-primary">Cosmetics</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-                            
-                            <Separator className="opacity-10" />
-                            
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <div className="space-y-3">
-                                    <Label htmlFor="address" className="text-sm font-semibold ml-1">Address</Label>
-                                    <Input
-                                        id="address"
-                                        placeholder="Street, City"
-                                        value={formData.address}
-                                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                        className="h-11 rounded-xl bg-muted/40 border-primary/10 focus-visible:ring-primary"
-                                    />
-                                </div>
-                                <div className="space-y-3">
-                                    <Label htmlFor="phone" className="text-sm font-semibold ml-1">Contact Phone</Label>
-                                    <Input
-                                        id="phone"
-                                        placeholder="+252 ..."
-                                        value={formData.phone}
-                                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                        className="h-11 rounded-xl bg-muted/40 border-primary/10 focus-visible:ring-primary"
-                                    />
-                                </div>
-                            </div>
-                        </CardContent>
-                        <CardFooter className="pb-8">
-                            <Button 
-                                type="submit" 
-                                className="w-full h-14 rounded-xl font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_10px_30px_rgba(var(--primary-rgb),0.2)] hover:shadow-[0_15px_40px_rgba(var(--primary-rgb),0.3)] transition-all flex items-center justify-center gap-2 text-lg active:scale-[0.98]" 
-                                disabled={loading || !!invitationLoading}
-                            >
-                                {loading ? (
-                                    <div className="flex items-center gap-2">
-                                        <span className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                                        <span>Proccessing...</span>
+                    {/* Right Column: Registration */}
+                    <div className="flex flex-col">
+                        <Card className="flex-1 border-primary/10 bg-card/40 backdrop-blur-xl shadow-2xl relative overflow-hidden group border-t-4 border-t-primary/50">
+                            <CardHeader className="pb-6">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
+                                        <Sparkle className="h-5 w-5 text-primary" />
                                     </div>
-                                ) : (
-                                    <>
-                                        Get Started <ArrowRight className="h-5 w-5" />
-                                    </>
-                                )}
-                            </Button>
-                        </CardFooter>
-                    </form>
-                    <div className="absolute bottom-0 left-0 w-full h-1 px-8">
-                        <div className="w-full h-full bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+                                    <CardTitle className="text-2xl font-bold italic tracking-tight uppercase">
+                                        Create Business
+                                    </CardTitle>
+                                </div>
+                                <CardDescription className="text-base text-balance">
+                                    Start your own instance and take full control of your operations today.
+                                </CardDescription>
+                            </CardHeader>
+                            <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
+                                <CardContent className="space-y-6 flex-1">
+                                    <div className="grid gap-5">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="name" className="text-sm font-black uppercase tracking-widest text-muted-foreground/80 ml-1">Company Name</Label>
+                                            <Input
+                                                id="name"
+                                                placeholder="e.g. Najax Logistics"
+                                                required
+                                                value={formData.name}
+                                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                                className="h-14 px-5 rounded-2xl bg-muted/30 border-primary/5 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all text-lg font-medium"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="type" className="text-sm font-black uppercase tracking-widest text-muted-foreground/80 ml-1">Business Sector</Label>
+                                            <Select
+                                                value={formData.type}
+                                                onValueChange={(value) => setFormData({ ...formData, type: value })}
+                                            >
+                                                <SelectTrigger className="h-14 px-5 rounded-2xl bg-muted/30 border-primary/5 focus:ring-primary text-lg">
+                                                    <SelectValue placeholder="Select industry" />
+                                                </SelectTrigger>
+                                                <SelectContent className="rounded-2xl border-primary/10 shadow-2xl backdrop-blur-lg">
+                                                    <SelectItem value="SHOP" className="py-3 focus:bg-primary/10 focus:text-primary rounded-xl mx-1">General Commerce</SelectItem>
+                                                    <SelectItem value="PHARMACY" className="py-3 focus:bg-primary/10 focus:text-primary rounded-xl mx-1">Healthcare / Pharmacy</SelectItem>
+                                                    <SelectItem value="COSMETICS" className="py-3 focus:bg-primary/10 focus:text-primary rounded-xl mx-1">Beauty & Cosmetics</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid gap-5 sm:grid-cols-2">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="address" className="text-sm font-black uppercase tracking-widest text-muted-foreground/80 ml-1">HQ Address</Label>
+                                            <Input
+                                                id="address"
+                                                placeholder="City, Region"
+                                                value={formData.address}
+                                                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                                className="h-12 rounded-2xl bg-muted/30 border-primary/5 focus-visible:ring-primary"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="phone" className="text-sm font-black uppercase tracking-widest text-muted-foreground/80 ml-1">Office Phone</Label>
+                                            <Input
+                                                id="phone"
+                                                placeholder="+252 ..."
+                                                value={formData.phone}
+                                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                                className="h-12 rounded-2xl bg-muted/30 border-primary/5 focus-visible:ring-primary"
+                                            />
+                                        </div>
+                                    </div>
+                                </CardContent>
+                                <CardFooter className="pb-8 pt-4">
+                                    <Button 
+                                        type="submit" 
+                                        className="w-full h-15 rounded-2xl font-black bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_15px_40px_rgba(var(--primary-rgb),0.25)] hover:shadow-[0_20px_50px_rgba(var(--primary-rgb),0.35)] transition-all flex items-center justify-center gap-3 text-xl active:scale-[0.97] group" 
+                                        disabled={loading || !!invitationLoading}
+                                    >
+                                        {loading ? (
+                                            <span className="w-6 h-6 border-3 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                                        ) : (
+                                            <>
+                                                Launch Business <ArrowRight className="h-6 w-6 group-hover:translate-x-1 transition-transform" />
+                                            </>
+                                        )}
+                                    </Button>
+                                </CardFooter>
+                            </form>
+                        </Card>
                     </div>
-                </Card>
+                </div>
                 
-                <p className="text-center text-xs text-muted-foreground/60 italic">
-                    By continuing, you agree to our Terms of Service and Privacy Policy.
-                </p>
+                <div className="flex flex-col items-center gap-2 opacity-40">
+                    <p className="text-center text-[10px] font-black uppercase tracking-widest">
+                        Najax Enterprise Solutions &copy; 2024
+                    </p>
+                </div>
             </div>
         </div>
     );
