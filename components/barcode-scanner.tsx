@@ -17,6 +17,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     qrbox = 250,
 }) => {
     const scannerRef = useRef<Html5Qrcode | null>(null);
+    const isScanningRef = useRef<boolean>(false);
 
     useEffect(() => {
         const html5QrCode = new Html5Qrcode("reader");
@@ -36,33 +37,46 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             ]
         };
 
-        html5QrCode.start(
-            { facingMode: "environment" },
-            config,
-            (decodedText) => {
-                onScanSuccess(decodedText);
-            },
-            (errorMessage) => {
-                if (onScanFailure) onScanFailure(errorMessage);
+        const startScanner = async () => {
+            if (isScanningRef.current) return;
+            
+            try {
+                await html5QrCode.start(
+                    { facingMode: "environment" },
+                    config,
+                    (decodedText) => {
+                        onScanSuccess(decodedText);
+                    },
+                    (errorMessage) => {
+                        if (onScanFailure) onScanFailure(errorMessage);
+                    }
+                );
+                isScanningRef.current = true;
+            } catch (err) {
+                console.error("Camera start error (env):", err);
+                try {
+                    await html5QrCode.start(
+                        { facingMode: "user" },
+                        config,
+                        onScanSuccess,
+                        onScanFailure
+                    );
+                    isScanningRef.current = true;
+                } catch (err2) {
+                    console.error("Camera start error (user):", err2);
+                }
             }
-        ).catch((err) => {
-            console.error("Camera start error:", err);
-            // Fallback to default camera if environment fails
-            html5QrCode.start(
-                { facingMode: "user" },
-                config,
-                onScanSuccess,
-                onScanFailure
-            );
-        });
+        };
+
+        startScanner();
 
         return () => {
-            if (scannerRef.current) {
+            if (scannerRef.current && isScanningRef.current) {
                 const scanner = scannerRef.current;
+                isScanningRef.current = false;
                 scanner.stop().catch(err => {
-                    // Safely check if error message indicates scanner was already stopped
-                    const errorMessage = err?.toString() || "";
-                    if (!errorMessage.includes("not scanning")) {
+                    const msg = err?.toString() || "";
+                    if (!msg.includes("not scanning")) {
                         console.error("Scanner stop error:", err);
                     }
                 });
