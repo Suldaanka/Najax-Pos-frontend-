@@ -114,6 +114,10 @@ export function NavUser({
                 <Bell />
                 Notifications
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/dashboard/business/new")}>
+                <Sparkles className="text-amber-500" />
+                Invitations
+              </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
