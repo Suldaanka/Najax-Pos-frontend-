@@ -3,7 +3,7 @@
 import React from "react";
 import {
     ShoppingCart, Trash2, Plus, Minus, CreditCard, Banknote, User,
-    CheckCircle2, Laptop, HandCoins
+    CheckCircle2, Laptop, HandCoins, X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -30,7 +30,9 @@ export function CartSidebar() {
         updateQuantity,
         addToCart,
         removeFromCart,
-        handleCheckout
+        handleCheckout,
+        isCartOpen,
+        setIsCartOpen
     } = useCart();
 
     if (!isPOS) return null;
@@ -38,12 +40,36 @@ export function CartSidebar() {
     const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
     return (
-        <div className="w-[420px] flex flex-col h-full bg-card border-l border-border p-5 shadow-xl overflow-hidden animate-in fade-in slide-in-from-right duration-300">
-            <div className="flex items-center justify-between mb-6">
-                <div>
-                    <h2 className="text-xl font-black text-primary leading-none uppercase tracking-tight">Checkout Order</h2>
-                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] mt-1.5 block">Invoice: #ORD-{Math.floor(Math.random() * 9000) + 1000}</span>
-                </div>
+        <>
+            {/* Mobile Overlay Backdrop */}
+            {isCartOpen && (
+                <div 
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[40] lg:hidden animate-in fade-in duration-300"
+                    onClick={() => setIsCartOpen(false)}
+                />
+            )}
+            
+            <div className={cn(
+                "fixed inset-y-0 right-0 z-[50] lg:relative lg:z-0",
+                "w-full sm:w-[420px] flex flex-col h-full bg-card border-l border-border p-5 shadow-xl overflow-hidden transition-transform duration-300",
+                isCartOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0",
+                !isPOS && "hidden"
+            )}>
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-2">
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="lg:hidden rounded-full h-8 w-8" 
+                            onClick={() => setIsCartOpen(false)}
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                        <div>
+                            <h2 className="text-xl font-black text-primary leading-none uppercase tracking-tight">Checkout Order</h2>
+                            <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] mt-1.5 block">Invoice: #ORD-{Math.floor(Math.random() * 9000) + 1000}</span>
+                        </div>
+                    </div>
                 <Button variant="ghost" size="icon" className="rounded-md hover:bg-destructive/10 hover:text-destructive transition-all text-muted-foreground" onClick={() => { setCart([]); toast.error("Cart cleared"); }}>
                     <Trash2 className="h-4 w-4" />
                 </Button>

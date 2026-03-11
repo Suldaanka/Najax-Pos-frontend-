@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Plus, LayoutGrid, Tags } from "lucide-react";
+import { Search, Plus, LayoutGrid, Tags, ShoppingCart, Camera } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -24,7 +24,7 @@ export default function POSPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<string>("All");
     const [isCameraOpen, setIsCameraOpen] = useState(false);
-    const { addToCart } = useCart();
+    const { addToCart, isCartOpen, setIsCartOpen, cart } = useCart();
 
     const businessId = (session?.user as any)?.activeBusinessId;
 
@@ -140,7 +140,22 @@ export default function POSPage() {
                 <Separator orientation="vertical" className="mr-2 h-4" />
                 <div className="flex flex-1 items-center justify-between">
                     <h1 className="text-lg font-semibold">POS Terminal</h1>
-                    <ModeToggle />
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="lg:hidden relative"
+                            onClick={() => setIsCartOpen(true)}
+                        >
+                            <ShoppingCart className="h-5 w-5" />
+                            {cart.length > 0 && (
+                                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">
+                                    {cart.length}
+                                </span>
+                            )}
+                        </Button>
+                        <ModeToggle />
+                    </div>
                 </div>
             </header>
 

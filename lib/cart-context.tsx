@@ -20,7 +20,8 @@ interface CartContextType {
     setSelectedCustomerId: (id: string) => void;
     paymentMethod: string;
     setPaymentMethod: (method: string) => void;
-    isCheckingOut: boolean;
+    isCartOpen: boolean;
+    setIsCartOpen: (open: boolean) => void;
     addToCart: (product: any) => void;
     updateQuantity: (id: string, delta: number) => void;
     removeFromCart: (id: string) => void;
@@ -36,6 +37,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const [selectedCustomerId, setSelectedCustomerId] = useState<string>("cash");
     const [paymentMethod, setPaymentMethod] = useState("Cash");
     const [isCheckingOut, setIsCheckingOut] = useState(false);
+    const [isCartOpen, setIsCartOpen] = useState(false);
 
     useEffect(() => {
         const activeId = (session?.user as any)?.activeBusinessId;
@@ -134,6 +136,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             paymentMethod,
             setPaymentMethod,
             isCheckingOut,
+            isCartOpen,
+            setIsCartOpen,
             addToCart,
             updateQuantity,
             removeFromCart,
