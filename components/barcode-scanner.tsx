@@ -18,8 +18,10 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 }) => {
     const scannerRef = useRef<Html5Qrcode | null>(null);
     const isScanningRef = useRef<boolean>(false);
+    const unmountedRef = useRef<boolean>(false);
 
     useEffect(() => {
+        unmountedRef.current = false;
         const html5QrCode = new Html5Qrcode("reader");
         scannerRef.current = html5QrCode;
 
@@ -38,22 +40,29 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         };
 
         const startScanner = async () => {
-            if (isScanningRef.current) return;
+            if (isScanningRef.current || unmountedRef.current) return;
             
             try {
                 await html5QrCode.start(
                     { facingMode: "environment" },
                     config,
                     (decodedText) => {
-                        onScanSuccess(decodedText);
+                        if (!unmountedRef.current) onScanSuccess(decodedText);
                     },
                     (errorMessage) => {
-                        if (onScanFailure) onScanFailure(errorMessage);
+                        if (onScanFailure && !unmountedRef.current) onScanFailure(errorMessage);
                     }
                 );
-                isScanningRef.current = true;
+                
+                if (unmountedRef.current) {
+                    await html5QrCode.stop();
+                    isScanningRef.current = false;
+                } else {
+                    isScanningRef.current = true;
+                }
             } catch (err) {
-                console.error("Camera start error (env):", err);
+                if (unmountedRef.current) return;
+                console.warn("Camera start error (env), trying user camera:", err);
                 try {
                     await html5QrCode.start(
                         { facingMode: "user" },
@@ -63,7 +72,9 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                     );
                     isScanningRef.current = true;
                 } catch (err2) {
-                    console.error("Camera start error (user):", err2);
+                    if (!unmountedRef.current) {
+                        console.error("Camera start error (user):", err2);
+                    }
                 }
             }
         };
@@ -71,12 +82,14 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         startScanner();
 
         return () => {
+            unmountedRef.current = true;
             if (scannerRef.current && isScanningRef.current) {
                 const scanner = scannerRef.current;
                 isScanningRef.current = false;
                 scanner.stop().catch(err => {
-                    const msg = err?.toString() || "";
-                    if (!msg.includes("not scanning")) {
+                    // Ignore common cleanup errors during unmount
+                    const msg = err?.toString().toLowerCase() || "";
+                    if (!msg.includes("not scanning") && !msg.includes("not running") && !msg.includes("removechild")) {
                         console.error("Scanner stop error:", err);
                     }
                 });
