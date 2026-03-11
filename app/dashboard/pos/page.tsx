@@ -207,6 +207,13 @@ export default function POSPage() {
                             <div className="p-6">
                                 <BarcodeScanner 
                                     onScanSuccess={(text: string) => {
+                                        // Simple throttling to prevent rapid duplicate scans
+                                        const now = Date.now();
+                                        if ((window as any)._lastScanTime && now - (window as any)._lastScanTime < 2000) {
+                                            return;
+                                        }
+                                        (window as any)._lastScanTime = now;
+
                                         const product = products.find(p => p.barcode === text);
                                         if (product) {
                                             if (product.stockQuantity > 0) {
@@ -215,12 +222,7 @@ export default function POSPage() {
                                                     description: "Added to cart successfully",
                                                     position: "bottom-center",
                                                 });
-                                                // Keep scanner open for more scans? Or close?
-                                                // User said "every product you add show as toast in bottom"
-                                                // Usually in POS you want to keep scanning, but the requirement said "modal or popup"
-                                                // I'll keep it open for multi-scan but close it if they want.
-                                                // Actually, let's close it to avoid accidental multi-scans of the same item too fast.
-                                                setIsCameraOpen(false);
+                                                // Continuous scanning: We stay open!
                                             } else {
                                                 toast.error(`${product.name} is out of stock`);
                                             }
@@ -347,6 +349,17 @@ export default function POSPage() {
                         ))}
                     </div>
                 </ScrollArea>
+            </div>
+
+            {/* Mobile FAB Camera Button */}
+            <div className="fixed bottom-safe-area-inset-bottom right-6 z-40 lg:hidden pointer-events-none pb-safe">
+                <Button
+                    size="icon"
+                    className="h-16 w-16 rounded-full shadow-2xl pointer-events-auto bg-primary text-primary-foreground hover:scale-105 active:scale-95 transition-all duration-300 border-4 border-background"
+                    onClick={() => setIsCameraOpen(true)}
+                >
+                    <Camera className="h-8 w-8" />
+                </Button>
             </div>
         </div>
     );
