@@ -129,6 +129,11 @@ export default function ProductsPage() {
 
     const handleAddProduct = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        
+        const totalStock = addForm.trackCartons
+            ? (addForm.cartons * addForm.piecesPerCarton) + addForm.loosePieces
+            : addForm.stock;
+
         const data = {
             businessId,
             name: addForm.name,
@@ -153,6 +158,11 @@ export default function ProductsPage() {
 
     const handleEditProduct = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+
+        const totalStock = editForm.trackCartons
+            ? (editForm.cartons * editForm.piecesPerCarton) + editForm.loosePieces
+            : editForm.stock;
+
         const data = {
             name: editForm.name,
             categoryId: editForm.categoryId,
