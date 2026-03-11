@@ -352,8 +352,8 @@ export default function POSPage() {
                 </ScrollArea>
             </div>
 
-            {/* Mobile FAB Camera Button */}
-            <div className="fixed bottom-safe-area-inset-bottom right-6 z-40 lg:hidden pointer-events-none pb-safe">
+            {/* Mobile FAB Camera Button - Moved to bottom-right fixed */}
+            <div className="fixed bottom-10 right-6 z-50 lg:hidden pointer-events-none">
                 <Button
                     size="icon"
                     className="h-16 w-16 rounded-full shadow-2xl pointer-events-auto bg-primary text-primary-foreground hover:scale-105 active:scale-95 transition-all duration-300 border-4 border-background"
