@@ -63,10 +63,10 @@ export default function CreateBusinessPage() {
         return () => { isMounted = false; };
     }, [router]);
 
-    const handleAcceptInvitation = async (token: string, businessName: string) => {
-        setInvitationLoading(token);
+    const handleAcceptInvitation = async (id: string, businessName: string) => {
+        setInvitationLoading(id);
         try {
-            await invitationsApi.accept(token);
+            await invitationsApi.accept({ id });
             toast.success(`Succesfully joined ${businessName}!`);
             window.location.href = "/dashboard";
         } catch (error: any) {
@@ -148,10 +148,10 @@ export default function CreateBusinessPage() {
                                             <Button 
                                                 size="lg" 
                                                 className="rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black shadow-lg shadow-amber-900/20 active:scale-95 transition-all h-12 px-6"
-                                                onClick={() => handleAcceptInvitation(invite.token, invite.business.name)}
+                                                onClick={() => handleAcceptInvitation(invite.id, invite.business.name)}
                                                 disabled={!!invitationLoading}
                                             >
-                                                {invitationLoading === invite.token ? (
+                                                {invitationLoading === invite.id ? (
                                                     <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                                 ) : (
                                                     <>Join <CheckCircle2 className="ml-2 h-4 w-4" /></>

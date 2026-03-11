@@ -97,7 +97,7 @@ export const invitationsApi = {
     send: (data: any) => apiFetch('/invitations', { method: 'POST', body: JSON.stringify(data) }),
     getAll: (businessId: string) => apiFetch(`/invitations?businessId=${businessId}`),
     getMyInvitations: () => apiFetch('/invitations/mine'),
-    accept: (token: string) => apiFetch('/invitations/accept', { method: 'POST', body: JSON.stringify({ token }) }),
+    accept: (payload: { id?: string, token?: string }) => apiFetch('/invitations/accept', { method: 'POST', body: JSON.stringify(payload) }),
     delete: (id: string) => apiFetch(`/invitations/${id}`, { method: 'DELETE' }),
 };
 
