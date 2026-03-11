@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { useCart } from "@/lib/cart-context";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ModeToggle } from "@/components/mode-toggle";
+import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
