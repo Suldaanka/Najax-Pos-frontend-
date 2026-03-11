@@ -15,7 +15,6 @@ import { ModeToggle } from "@/components/mode-toggle";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import BarcodeScanner from "@/components/barcode-scanner";
-import { Camera } from "lucide-react";
 
 export default function POSPage() {
     const { data: session } = useSession();

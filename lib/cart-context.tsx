@@ -20,6 +20,7 @@ interface CartContextType {
     setSelectedCustomerId: (id: string) => void;
     paymentMethod: string;
     setPaymentMethod: (method: string) => void;
+    isCheckingOut: boolean;
     isCartOpen: boolean;
     setIsCartOpen: (open: boolean) => void;
     addToCart: (product: any) => void;

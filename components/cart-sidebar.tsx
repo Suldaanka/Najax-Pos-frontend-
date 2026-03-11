@@ -220,5 +220,6 @@ export function CartSidebar() {
                 </div>
             </div>
         </div>
-    );
+    </>
+);
 }
