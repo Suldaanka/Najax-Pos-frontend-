@@ -13,6 +13,9 @@ import { useCart } from "@/lib/cart-context";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import BarcodeScanner from "@/components/barcode-scanner";
+import { Camera } from "lucide-react";
 
 export default function POSPage() {
     const { data: session } = useSession();
@@ -20,6 +23,7 @@ export default function POSPage() {
     const [categories, setCategories] = useState<any[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<string>("All");
+    const [isCameraOpen, setIsCameraOpen] = useState(false);
     const { addToCart } = useCart();
 
     const businessId = (session?.user as any)?.activeBusinessId;
@@ -147,15 +151,49 @@ export default function POSPage() {
                 <div className="px-6 py-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10 space-y-4 shrink-0">
 
                     {/* Search */}
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
-                        <Input
-                            placeholder="Search products by name or category..."
-                            className="pl-10 h-10 bg-muted/50 border-none rounded-xl focus-visible:ring-1 focus-visible:ring-primary/20 shadow-sm"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
+                    <div className="flex gap-2">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search products by name, category or barcode..."
+                                className="pl-10 h-11 bg-muted/50 border-none rounded-xl"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
+                        <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className={cn("h-11 w-11 rounded-xl transition-colors", isCameraOpen && "bg-primary text-primary-foreground")}
+                            onClick={() => setIsCameraOpen(!isCameraOpen)}
+                        >
+                            <Camera className="h-5 w-5" />
+                        </Button>
                     </div>
+
+                    {/* Camera Scanner Area */}
+                    {isCameraOpen && (
+                        <div className="animate-in slide-in-from-top-4 duration-500 overflow-hidden">
+                            <BarcodeScanner 
+                                onScanSuccess={(text: string) => {
+                                    const product = products.find(p => p.barcode === text);
+                                    if (product) {
+                                        if (product.stockQuantity > 0) {
+                                            addToCart(product);
+                                            // Audio feedback is already in the global effect, 
+                                            // but we'll manually play it here if needed or use toast
+                                            toast.success(`${product.name} added via camera`);
+                                        } else {
+                                            toast.error(`${product.name} is out of stock`);
+                                        }
+                                    } else {
+                                        toast.error(`Not found: ${text}`);
+                                    }
+                                    setIsCameraOpen(false);
+                                }}
+                            />
+                        </div>
+                    )}
 
                     {/* Categories */}
                     <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
