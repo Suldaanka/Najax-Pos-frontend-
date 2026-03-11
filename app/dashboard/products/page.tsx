@@ -34,6 +34,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { productsApi, categoriesApi } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
+import BarcodeScanner from "@/components/barcode-scanner";
 import {
     Select,
     SelectContent,
@@ -54,6 +55,7 @@ export default function ProductsPage() {
     const [isAdjustOpen, setIsAdjustOpen] = useState(false);
     const [adjustingProduct, setAdjustingProduct] = useState<any>(null);
     const [searchQuery, setSearchQuery] = useState("");
+    const [isCameraOpen, setIsCameraOpen] = useState(false);
 
     const [addForm, setAddForm] = useState({
         name: "",
@@ -224,7 +226,7 @@ export default function ProductsPage() {
                     </Button>
                     <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                         <DialogTrigger asChild>
-                            <Button>
+                            <Button onClick={() => setIsCameraOpen(true)}>
                                 <Plus className="mr-2 h-4 w-4" /> Add Product
                             </Button>
                         </DialogTrigger>
@@ -239,14 +241,38 @@ export default function ProductsPage() {
                                 <div className="grid gap-4 py-4">
                                     <div className="grid grid-cols-4 items-center gap-4">
                                         <Label htmlFor="barcode" className="text-right">Barcode</Label>
-                                        <Input 
-                                            id="barcode" 
-                                            name="barcode" 
-                                            placeholder="Scan or type barcode"
-                                            className="col-span-3" 
-                                            value={addForm.barcode}
-                                            onChange={(e) => setAddForm({ ...addForm, barcode: e.target.value })}
-                                        />
+                                        <div className="col-span-3 space-y-2">
+                                            <div className="flex gap-2">
+                                                <Input 
+                                                    id="barcode" 
+                                                    name="barcode" 
+                                                    placeholder="Scan or type barcode"
+                                                    className="flex-1" 
+                                                    value={addForm.barcode}
+                                                    onChange={(e) => setAddForm({ ...addForm, barcode: e.target.value })}
+                                                />
+                                                <Button 
+                                                    type="button" 
+                                                    variant="outline" 
+                                                    size="icon"
+                                                    onClick={() => setIsCameraOpen(!isCameraOpen)}
+                                                    className={isCameraOpen ? "bg-primary text-primary-foreground" : ""}
+                                                >
+                                                    <Plus className={isCameraOpen ? "rotate-45 transition-transform" : "transition-transform"} />
+                                                </Button>
+                                            </div>
+                                            {isCameraOpen && (
+                                                <div className="mt-2 animate-in slide-in-from-top-2 duration-300">
+                                                    <BarcodeScanner 
+                                                        onScanSuccess={(text: string) => {
+                                                            setAddForm({ ...addForm, barcode: text });
+                                                            setIsCameraOpen(false);
+                                                            toast.success("Barcode scanned successfully!");
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="grid grid-cols-4 items-center gap-4">
                                         <Label htmlFor="name" className="text-right">Name</Label>
