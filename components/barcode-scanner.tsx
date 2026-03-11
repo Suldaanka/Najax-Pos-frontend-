@@ -58,9 +58,11 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
         return () => {
             if (scannerRef.current) {
-                scannerRef.current.stop().catch(err => {
-                    // Ignore already stopped error
-                    if (!err?.includes("not scanning")) {
+                const scanner = scannerRef.current;
+                scanner.stop().catch(err => {
+                    // Safely check if error message indicates scanner was already stopped
+                    const errorMessage = err?.toString() || "";
+                    if (!errorMessage.includes("not scanning")) {
                         console.error("Scanner stop error:", err);
                     }
                 });
