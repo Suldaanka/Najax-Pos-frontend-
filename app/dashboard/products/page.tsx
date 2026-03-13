@@ -673,6 +673,10 @@ export default function ProductsPage() {
                                                     loosePieces: product.piecesPerCarton ? product.stockQuantity % product.piecesPerCarton : 0,
                                                     stock: product.stockQuantity || 0,
                                                     unit: product.unit || "pcs",
+                                                    useBulkCalc: false,
+                                                    numBags: 0,
+                                                    kgPerBag: 50,
+                                                    costPerBag: 0,
                                                 });
                                                 setIsEditOpen(true);
                                             }}>
