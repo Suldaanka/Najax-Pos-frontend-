@@ -101,30 +101,66 @@ export function CartSidebar() {
                                     <p className="text-xs font-bold text-foreground truncate leading-none mb-1">{item.name}</p>
                                     <p className="text-[10px] text-primary font-black">${item.price}</p>
                                 </div>
-                                <div className="flex items-center gap-1.5">
-                                    <div className="flex items-center gap-1 bg-primary/5 p-0.5 rounded-md border border-transparent">
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="flex items-center gap-1 bg-primary/5 p-0.5 rounded-md border border-transparent">
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); updateQuantity(item.id, -1); }}
+                                                className="h-5 w-5 flex items-center justify-center rounded-sm hover:bg-background hover:shadow-sm transition-all text-primary/40 hover:text-destructive text-[10px]"
+                                                title={item.quantity === 1 ? "Remove from cart" : "Decrease quantity"}
+                                            >
+                                                <Minus className="h-2.5 w-2.5" />
+                                            </button>
+                                            <span className="text-[10px] font-black w-7 text-center text-primary">{item.quantity}</span>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); updateQuantity(item.id, 1); }}
+                                                className="h-5 w-5 flex items-center justify-center rounded-sm hover:bg-background hover:shadow-sm transition-all text-primary/40 hover:text-primary"
+                                            >
+                                                <Plus className="h-2.5 w-2.5" />
+                                            </button>
+                                        </div>
                                         <button
-                                            onClick={(e) => { e.stopPropagation(); updateQuantity(item.id, -1); }}
-                                            className="h-5 w-5 flex items-center justify-center rounded-sm hover:bg-background hover:shadow-sm transition-all text-primary/40 hover:text-destructive text-[10px]"
-                                            title={item.quantity === 1 ? "Remove from cart" : "Decrease quantity"}
+                                            onClick={(e) => { e.stopPropagation(); removeFromCart(item.id); }}
+                                            className="p-1.5 rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all"
+                                            title="Remove item"
                                         >
-                                            <Minus className="h-2.5 w-2.5" />
-                                        </button>
-                                        <span className="text-[10px] font-black w-4 text-center text-primary">{item.quantity}</span>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); addToCart({ id: item.id, name: item.name, sellingPrice: item.price }); }}
-                                            className="h-5 w-5 flex items-center justify-center rounded-sm hover:bg-background hover:shadow-sm transition-all text-primary/40 hover:text-primary"
-                                        >
-                                            <Plus className="h-2.5 w-2.5" />
+                                            <Trash2 className="h-3.5 w-3.5" />
                                         </button>
                                     </div>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); removeFromCart(item.id); }}
-                                        className="p-1.5 rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all"
-                                        title="Remove item"
-                                    >
-                                        <Trash2 className="h-3.5 w-3.5" />
-                                    </button>
+                                    
+                                    {/* Fractional Quantity Presets for KG */}
+                                    {item.unit?.toLowerCase() === "kg" && (
+                                        <div className="flex gap-1">
+                                            {[
+                                                { label: "1/4", val: 0.25 },
+                                                { label: "1/2", val: 0.5 },
+                                                { label: "3/4", val: 0.75 }
+                                            ].map((preset) => (
+                                                <button
+                                                    key={preset.label}
+                                                    onClick={(e) => { 
+                                                        e.stopPropagation(); 
+                                                        setCart(prev => prev.map(i => i.id === item.id ? { ...i, quantity: preset.val } : i));
+                                                    }}
+                                                    className="px-1.5 py-0.5 rounded-sm bg-primary/10 text-[8px] font-black uppercase text-primary hover:bg-primary/20 transition-colors"
+                                                >
+                                                    {preset.label}
+                                                </button>
+                                            ))}
+                                            <Input 
+                                                type="number" 
+                                                step="0.01" 
+                                                className="h-5 w-12 text-[8px] p-0 font-bold text-center bg-transparent border-primary/20" 
+                                                value={item.quantity}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value);
+                                                    if (!isNaN(val)) {
+                                                        setCart(prev => prev.map(i => i.id === item.id ? { ...i, quantity: val } : i));
+                                                    }
+                                                }}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))}

@@ -10,6 +10,7 @@ export interface CartItem {
     name: string;
     price: number;
     quantity: number;
+    unit: string;
 }
 
 interface CartContextType {
@@ -83,7 +84,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                     item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
                 );
             }
-            return [...prev, { id: product.id, name: product.name, price: parseFloat(product.sellingPrice), quantity: 1 }];
+            return [...prev, { 
+                id: product.id, 
+                name: product.name, 
+                price: parseFloat(product.sellingPrice), 
+                quantity: 1, 
+                unit: product.unit || "pcs" 
+            }];
         });
         toast.info(`Added ${product.name} to cart`);
     }, []);
@@ -128,7 +135,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                 paidAmountShiling: paymentCurrency === "SOS" ? finalAmount * exchangeRate : null,
                 items: cart.map(item => ({
                     productId: item.id,
-                    quantity: item.quantity,
+                    quantity: Number(item.quantity),
                     price: Number(item.price)
                 }))
             };
