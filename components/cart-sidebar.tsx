@@ -6,6 +6,7 @@ import {
     CheckCircle2, Laptop, HandCoins, X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
@@ -26,6 +27,11 @@ export function CartSidebar() {
         setSelectedCustomerId,
         paymentMethod,
         setPaymentMethod,
+        discountPercentage,
+        setDiscountPercentage,
+        exchangeRate,
+        paymentCurrency,
+        setPaymentCurrency,
         isCheckingOut,
         updateQuantity,
         addToCart,
@@ -163,16 +169,63 @@ export function CartSidebar() {
                         </div>
                     </div>
 
-                    {/* Totals */}
-                    <div className="bg-primary/[0.02] p-4 rounded-none border border-primary/5 space-y-2">
+                    {/* Totals & Discount */}
+                    <div className="bg-primary/[0.02] p-4 rounded-none border border-primary/5 space-y-3">
                         <div className="flex justify-between items-center text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                             <span>Subtotal</span>
                             <span className="text-foreground font-black tracking-normal">$ {cartTotal.toFixed(2)}</span>
                         </div>
-                        <Separator className="bg-border/50 my-1.5" />
-                        <div className="flex justify-between items-center">
-                            <span className="text-[11px] font-black text-foreground uppercase tracking-[0.1em]">Total</span>
-                            <span className="text-xl font-black text-primary leading-none">$ {cartTotal.toFixed(2)}</span>
+                        
+                        <div className="flex justify-between items-center gap-4">
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest shrink-0">Discount (%)</span>
+                            <Input 
+                                type="number" 
+                                min="0" 
+                                max="100" 
+                                className="h-7 w-20 text-[10px] font-black text-right p-1" 
+                                value={discountPercentage} 
+                                onChange={(e) => setDiscountPercentage(Number(e.target.value))}
+                            />
+                        </div>
+
+                        <div className="flex justify-between items-center gap-4 pt-1">
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest shrink-0">Pay In</span>
+                            <div className="flex bg-muted rounded-md p-1 items-center gap-1">
+                                <button 
+                                    onClick={() => setPaymentCurrency("USD")}
+                                    className={cn("px-2 py-0.5 text-[9px] font-black uppercase rounded shadow-sm transition-all", paymentCurrency === "USD" ? "bg-background text-primary" : "text-muted-foreground")}
+                                >USD</button>
+                                <button 
+                                    onClick={() => setPaymentCurrency("SOS")}
+                                    className={cn("px-2 py-0.5 text-[9px] font-black uppercase rounded shadow-sm transition-all", paymentCurrency === "SOS" ? "bg-background text-primary" : "text-muted-foreground")}
+                                >SOS</button>
+                            </div>
+                        </div>
+
+                        <Separator className="bg-border/50 my-1" />
+                        
+                        <div className="flex justify-between items-end">
+                            <div className="flex flex-col">
+                                <span className="text-[11px] font-black text-foreground uppercase tracking-[0.1em]">Payable</span>
+                                {paymentCurrency === "SOS" && (
+                                    <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-tighter">
+                                        Rate: 1 USD = {exchangeRate} SOS
+                                    </span>
+                                )}
+                            </div>
+                            <div className="flex flex-col items-end">
+                                <span className="text-xl font-black text-primary leading-none">
+                                    {paymentCurrency === "USD" 
+                                        ? `$ ${(cartTotal * (1 - discountPercentage / 100)).toFixed(2)}`
+                                        : `${Math.round((cartTotal * (1 - discountPercentage / 100)) * exchangeRate).toLocaleString()} SOS`
+                                    }
+                                </span>
+                                {paymentCurrency === "SOS" && (
+                                    <span className="text-[10px] font-black text-primary/40">
+                                        $ {(cartTotal * (1 - discountPercentage / 100)).toFixed(2)}
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     </div>
 

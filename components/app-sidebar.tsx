@@ -14,6 +14,7 @@ import {
   User,
   Loader2,
   Repeat,
+  ShoppingBag,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -59,6 +60,16 @@ const data = {
       title: "Sales",
       url: "/dashboard/sales",
       icon: ShoppingCart,
+    },
+    {
+      title: "Suppliers",
+      url: "/dashboard/suppliers",
+      icon: Users,
+    },
+    {
+      title: "Purchases",
+      url: "/dashboard/purchases",
+      icon: ShoppingBag,
     },
     {
       title: "Customers",

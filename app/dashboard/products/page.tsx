@@ -68,6 +68,7 @@ export default function ProductsPage() {
         piecesPerCarton: 0,
         loosePieces: 0,
         stock: 0,
+        unit: "pcs",
     });
 
     const [editForm, setEditForm] = useState({
@@ -81,6 +82,7 @@ export default function ProductsPage() {
         piecesPerCarton: 0,
         loosePieces: 0,
         stock: 0,
+        unit: "pcs",
     });
 
     const businessId = (session?.user as any)?.activeBusinessId;
@@ -144,6 +146,7 @@ export default function ProductsPage() {
             costPrice: addForm.costPrice,
             sellingPrice: addForm.price,
             stockQuantity: totalStock,
+            unit: addForm.unit,
             piecesPerCarton: addForm.trackCartons ? addForm.piecesPerCarton : null,
         };
 
@@ -172,6 +175,7 @@ export default function ProductsPage() {
             costPrice: editForm.costPrice,
             sellingPrice: editForm.price,
             stockQuantity: totalStock,
+            unit: editForm.unit,
             piecesPerCarton: editForm.trackCartons ? editForm.piecesPerCarton : null,
         };
 
@@ -302,6 +306,26 @@ export default function ProductsPage() {
                                                             {cat.name}
                                                         </SelectItem>
                                                     ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label htmlFor="unit" className="text-right">Unit</Label>
+                                        <div className="col-span-3">
+                                            <Select 
+                                                name="unit" 
+                                                value={addForm.unit}
+                                                onValueChange={(val) => setAddForm({ ...addForm, unit: val })}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select unit" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="pcs">Pcs (Pieces)</SelectItem>
+                                                    <SelectItem value="kg">Kg (Kilograms)</SelectItem>
+                                                    <SelectItem value="cnt">Cnt (Count)</SelectItem>
+                                                    <SelectItem value="box">Box</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </div>
@@ -442,6 +466,7 @@ export default function ProductsPage() {
                             <TableHead>Name</TableHead>
                             <TableHead>Category</TableHead>
                             <TableHead>Price</TableHead>
+                            <TableHead>Unit</TableHead>
                             <TableHead>Stock</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
@@ -461,6 +486,7 @@ export default function ProductsPage() {
                                 <TableCell className="font-medium text-sm">{product.name}</TableCell>
                                 <TableCell className="text-sm">{product.category?.name || "Uncategorized"}</TableCell>
                                 <TableCell className="text-sm">${product.sellingPrice}</TableCell>
+                                <TableCell className="text-xs uppercase font-bold text-muted-foreground">{product.unit || "pcs"}</TableCell>
                                 <TableCell className="text-sm">
                                     {product.piecesPerCarton ? (
                                         <span>{Math.floor(product.stockQuantity / product.piecesPerCarton)} Ctns, {product.stockQuantity % product.piecesPerCarton} Pcs</span>
@@ -505,6 +531,7 @@ export default function ProductsPage() {
                                                     piecesPerCarton: product.piecesPerCarton || 0,
                                                     loosePieces: product.piecesPerCarton ? product.stockQuantity % product.piecesPerCarton : 0,
                                                     stock: product.stockQuantity || 0,
+                                                    unit: product.unit || "pcs",
                                                 });
                                                 setIsEditOpen(true);
                                             }}>
@@ -581,6 +608,26 @@ export default function ProductsPage() {
                                                         {cat.name}
                                                     </SelectItem>
                                                 ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="edit-unit" className="text-right">Unit</Label>
+                                    <div className="col-span-3">
+                                        <Select 
+                                            name="unit" 
+                                            value={editForm.unit}
+                                            onValueChange={(val) => setEditForm({ ...editForm, unit: val })}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select unit" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="pcs">Pcs (Pieces)</SelectItem>
+                                                <SelectItem value="kg">Kg (Kilograms)</SelectItem>
+                                                <SelectItem value="cnt">Cnt (Count)</SelectItem>
+                                                <SelectItem value="box">Box</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>

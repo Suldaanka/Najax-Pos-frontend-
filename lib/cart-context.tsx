@@ -20,6 +20,12 @@ interface CartContextType {
     setSelectedCustomerId: (id: string) => void;
     paymentMethod: string;
     setPaymentMethod: (method: string) => void;
+    discountPercentage: number;
+    setDiscountPercentage: (discount: number) => void;
+    exchangeRate: number;
+    setExchangeRate: (rate: number) => void;
+    paymentCurrency: "USD" | "SOS";
+    setPaymentCurrency: (currency: "USD" | "SOS") => void;
     isCheckingOut: boolean;
     isCartOpen: boolean;
     setIsCartOpen: (open: boolean) => void;
@@ -37,6 +43,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const [customers, setCustomers] = useState<any[]>([]);
     const [selectedCustomerId, setSelectedCustomerId] = useState<string>("cash");
     const [paymentMethod, setPaymentMethod] = useState("Cash");
+    const [discountPercentage, setDiscountPercentage] = useState(0);
+    const [exchangeRate, setExchangeRate] = useState(26000); // Default, will fetch
+    const [paymentCurrency, setPaymentCurrency] = useState<"USD" | "SOS">("USD");
     const [isCheckingOut, setIsCheckingOut] = useState(false);
     const [isCartOpen, setIsCartOpen] = useState(false);
 
@@ -48,18 +57,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             console.log("CartContext: Fetching customers for business:", businessId);
             customersApi.getAll(businessId)
                 .then(data => {
-                    // Logic to handle both direct arrays and object-wrapped responses
                     const list = Array.isArray(data) ? data : (data?.data || data?.customers || []);
-                    console.log(`CartContext: Loaded ${list.length} customers`);
                     setCustomers(list);
                 })
                 .catch(err => {
                     console.error("CartContext: Customer fetch error:", err);
                     setCustomers([]);
-                    // Silently fail to avoid interrupting POS flow, unless it's a critical error
                 });
+
+            // Fetch current exchange rate
+            apiFetch('/inventory/exchange-rates')
+                .then((rates: any) => {
+                    const rate = rates.find((r: any) => r.fromCurrency === "USD" && r.toCurrency === "SOS");
+                    if (rate) setExchangeRate(Number(rate.rate));
+                })
+                .catch(err => console.error("Failed to fetch exchange rate:", err));
         }
-    }, [session?.user]); // Depend on session object to re-run when auth completes
+    }, [session?.user]);
 
     const addToCart = useCallback((product: any) => {
         setCart(prev => {
@@ -101,10 +115,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         setIsCheckingOut(true);
         try {
+            const discAmount = totalAmount * (discountPercentage / 100);
+            const finalAmount = totalAmount - discAmount;
+
             const saleData = {
                 customerId: selectedCustomerId === "cash" ? null : selectedCustomerId,
-                totalAmount,
+                totalAmount: finalAmount,
                 paymentMethod,
+                discountPercentage,
+                paymentCurrency,
+                exchangeRate: paymentCurrency === "SOS" ? exchangeRate : null,
+                paidAmountShiling: paymentCurrency === "SOS" ? finalAmount * exchangeRate : null,
                 items: cart.map(item => ({
                     productId: item.id,
                     quantity: item.quantity,
@@ -136,6 +157,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             setSelectedCustomerId,
             paymentMethod,
             setPaymentMethod,
+            discountPercentage,
+            setDiscountPercentage,
+            exchangeRate,
+            setExchangeRate,
+            paymentCurrency,
+            setPaymentCurrency,
             isCheckingOut,
             isCartOpen,
             setIsCartOpen,

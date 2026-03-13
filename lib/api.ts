@@ -104,3 +104,20 @@ export const invitationsApi = {
 export const dashboardApi = {
     getStats: () => apiFetch('/dashboard'),
 };
+
+export const inventoryApi = {
+    // Suppliers
+    getSuppliers: () => apiFetch('/inventory/suppliers'),
+    createSupplier: (data: any) => apiFetch('/inventory/suppliers', { method: 'POST', body: JSON.stringify(data) }),
+    updateSupplier: (id: string, data: any) => apiFetch(`/inventory/suppliers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteSupplier: (id: string) => apiFetch(`/inventory/suppliers/${id}`, { method: 'DELETE' }),
+
+    // Purchases
+    getPurchases: () => apiFetch('/inventory/purchases'),
+    createPurchase: (data: any) => apiFetch('/inventory/purchases', { method: 'POST', body: JSON.stringify(data) }),
+    deletePurchase: (id: string) => apiFetch(`/inventory/purchases/${id}`, { method: 'DELETE' }),
+
+    // Exchange Rates
+    getExchangeRates: () => apiFetch('/inventory/exchange-rates'),
+    updateExchangeRate: (data: any) => apiFetch('/inventory/exchange-rates', { method: 'POST', body: JSON.stringify(data) }),
+};
