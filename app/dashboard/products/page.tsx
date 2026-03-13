@@ -305,15 +305,16 @@ export default function ProductsPage() {
                                 <Plus className="mr-2 h-4 w-4" /> Add Product
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px]">
-                            <form onSubmit={handleAddProduct}>
-                                <DialogHeader>
+                        <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden">
+                            <form onSubmit={handleAddProduct} className="flex flex-col max-h-[90vh]">
+                                <DialogHeader className="p-6 pb-2">
                                     <DialogTitle>Add New Product</DialogTitle>
                                     <DialogDescription>
-                                        Enter the details of the new product here. Click save when you're done.
+                                        Enter the details of the new product here.
                                     </DialogDescription>
                                 </DialogHeader>
-                                <div className="grid gap-4 py-4">
+                                <div className="flex-1 overflow-y-auto p-6 py-2">
+                                    <div className="grid gap-4">
                                     <div className="grid grid-cols-4 items-center gap-4">
                                         <Label htmlFor="barcode" className="text-right">Barcode</Label>
                                         <div className="col-span-3 space-y-2">
@@ -557,26 +558,17 @@ export default function ProductsPage() {
                                                 value={addForm.price || ""}
                                                 onChange={(e) => setAddForm({ ...addForm, price: parseFloat(e.target.value) || 0 })}
                                             />
-                                            {(() => {
-                                                const totalStock = addForm.trackCartons && addForm.unit !== 'kg'
-                                                    ? (addForm.cartons * addForm.piecesPerCarton) + addForm.loosePieces
-                                                    : addForm.stock;
-                                                if (totalStock > 0 && addForm.costPrice > 0) {
-                                                    const unitCost = addForm.costPrice; // It's already per unit now
-                                                    const minPrice = unitCost * 1.2;
-                                                    return (
-                                                        <p className="text-[10px] text-muted-foreground">
-                                                            Unit Cost: ${unitCost.toFixed(2)} | Suggested Min Price (20% margin): <span className="text-primary font-bold">${minPrice.toFixed(2)}</span>
-                                                        </p>
-                                                    );
-                                                }
-                                                return null;
-                                            })()}
+                                        {(addForm.stock > 0 && addForm.costPrice > 0) && (
+                                            <p className="text-[10px] text-muted-foreground">
+                                                Unit Cost: ${addForm.costPrice.toFixed(2)} | Suggested Min Price (20% margin): <span className="text-primary font-bold">${(addForm.costPrice * 1.2).toFixed(2)}</span>
+                                            </p>
+                                        )}
                                         </div>
                                     </div>
                                 </div>
-                                <DialogFooter>
-                                    <Button type="submit">Save Product</Button>
+                            </div>
+                            <DialogFooter className="p-6 pt-2">
+                                    <Button type="submit" className="w-full sm:w-auto">Save Product</Button>
                                 </DialogFooter>
                             </form>
                         </DialogContent>
@@ -705,16 +697,17 @@ export default function ProductsPage() {
             </div>
 
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden">
                     {editingProduct && (
-                        <form onSubmit={handleEditProduct}>
-                            <DialogHeader>
+                        <form onSubmit={handleEditProduct} className="flex flex-col max-h-[90vh]">
+                            <DialogHeader className="p-6 pb-2">
                                 <DialogTitle>Edit Product</DialogTitle>
                                 <DialogDescription>
                                     Update the details of your product.
                                 </DialogDescription>
                             </DialogHeader>
-                            <div className="grid gap-4 py-4">
+                            <div className="flex-1 overflow-y-auto p-6 py-2">
+                                <div className="grid gap-4">
                                 <div className="grid grid-cols-4 items-center gap-4">
                                     <Label htmlFor="edit-barcode" className="text-right">Barcode</Label>
                                     <Input 
@@ -933,26 +926,17 @@ export default function ProductsPage() {
                                             onChange={(e) => setEditForm({ ...editForm, price: parseFloat(e.target.value) || 0 })}
                                             required
                                         />
-                                        {(() => {
-                                            const totalStock = editForm.trackCartons && editForm.unit !== 'kg'
-                                                ? (editForm.cartons * editForm.piecesPerCarton) + editForm.loosePieces
-                                                : editForm.stock;
-                                            if (totalStock > 0 && editForm.costPrice > 0) {
-                                                const unitCost = editForm.costPrice; // Per unit
-                                                const minPrice = unitCost * 1.2;
-                                                return (
-                                                    <p className="text-[10px] text-muted-foreground">
-                                                        Unit Cost: ${unitCost.toFixed(2)} | Suggested Min Price (20% margin): <span className="text-primary font-bold">${minPrice.toFixed(2)}</span>
-                                                    </p>
-                                                );
-                                            }
-                                            return null;
-                                        })()}
+                                        {(editForm.stock > 0 && editForm.costPrice > 0) && (
+                                            <p className="text-[10px] text-muted-foreground">
+                                                Unit Cost: ${editForm.costPrice.toFixed(2)} | Suggested Min Price (20% margin): <span className="text-primary font-bold">${(editForm.costPrice * 1.2).toFixed(2)}</span>
+                                            </p>
+                                        )}
+                                    </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <DialogFooter>
-                                <Button type="submit">Update Product</Button>
+                            <DialogFooter className="p-6 pt-2">
+                                <Button type="submit" className="w-full sm:w-auto">Update Product</Button>
                             </DialogFooter>
                         </form>
                     )}
