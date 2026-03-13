@@ -251,7 +251,9 @@ export default function ProductsPage() {
             stockQuantity: totalStock,
             unit: editForm.unit,
             piecesPerCarton: trackCartons ? editForm.piecesPerCarton : null,
-            piecesPerBag: trackBags ? editForm.piecesPerBag : (isKg && editForm.useBulkCalc) ? editForm.kgPerBag : null,
+            piecesPerBag: trackBags ? editForm.piecesPerBag : 
+                         (isKg && editForm.useBulkCalc) ? editForm.kgPerBag : 
+                         (isKg && editingProduct?.piecesPerBag) ? editingProduct.piecesPerBag : null,
         };
 
         try {
@@ -754,15 +756,15 @@ export default function ProductsPage() {
                                                     trackCartons: !!product.piecesPerCarton,
                                                     cartons: product.piecesPerCarton ? Math.floor(product.stockQuantity / product.piecesPerCarton) : 0,
                                                     piecesPerCarton: product.piecesPerCarton || 0,
-                                                    trackBags: !!product.piecesPerBag,
-                                                    bags: product.piecesPerBag ? Math.floor(product.stockQuantity / product.piecesPerBag) : 0,
+                                                    trackBags: !!product.piecesPerBag && product.unit !== 'kg',
+                                                    bags: (product.piecesPerBag && product.unit !== 'kg') ? Math.floor(product.stockQuantity / product.piecesPerBag) : 0,
                                                     piecesPerBag: product.piecesPerBag || 0,
-                                                    loosePieces: (product.piecesPerCarton || product.piecesPerBag) ? (product.stockQuantity % (product.piecesPerCarton || product.piecesPerBag)) : product.stockQuantity,
+                                                    loosePieces: (product.piecesPerCarton || (product.piecesPerBag && product.unit !== 'kg')) ? (product.stockQuantity % (product.piecesPerCarton || product.piecesPerBag)) : product.stockQuantity,
                                                     stock: product.stockQuantity || 0,
                                                     unit: product.unit || "pcs",
-                                                    useBulkCalc: false,
-                                                    numBags: 0,
-                                                    kgPerBag: 50,
+                                                    useBulkCalc: product.unit === 'kg' && !!product.piecesPerBag,
+                                                    numBags: (product.unit === 'kg' && product.piecesPerBag) ? Math.floor(product.stockQuantity / product.piecesPerBag) : 0,
+                                                    kgPerBag: (product.unit === 'kg' && product.piecesPerBag) ? product.piecesPerBag : 50,
                                                     costPerBag: 0,
                                                 });
                                                 setIsEditOpen(true);

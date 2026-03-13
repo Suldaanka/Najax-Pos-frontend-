@@ -43,6 +43,9 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             if (isScanningRef.current || unmountedRef.current) return;
             
             try {
+                // Ensure we haven't unmounted before starting
+                if (unmountedRef.current) return;
+
                 await html5QrCode.start(
                     { facingMode: "environment" },
                     config,
@@ -55,7 +58,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                 );
                 
                 if (unmountedRef.current) {
-                    await html5QrCode.stop();
+                    try { await html5QrCode.stop(); } catch {}
                     isScanningRef.current = false;
                 } else {
                     isScanningRef.current = true;
@@ -67,10 +70,20 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                     await html5QrCode.start(
                         { facingMode: "user" },
                         config,
-                        onScanSuccess,
-                        onScanFailure
+                        (decodedText) => {
+                            if (!unmountedRef.current) onScanSuccess(decodedText);
+                        },
+                        (errorMessage) => {
+                            if (onScanFailure && !unmountedRef.current) onScanFailure(errorMessage);
+                        }
                     );
-                    isScanningRef.current = true;
+                    
+                    if (unmountedRef.current) {
+                        try { await html5QrCode.stop(); } catch {}
+                        isScanningRef.current = false;
+                    } else {
+                        isScanningRef.current = true;
+                    }
                 } catch (err2) {
                     if (!unmountedRef.current) {
                         console.error("Camera start error (user):", err2);
@@ -83,16 +96,19 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
         return () => {
             unmountedRef.current = true;
-            if (scannerRef.current && isScanningRef.current) {
+            if (scannerRef.current) {
                 const scanner = scannerRef.current;
-                isScanningRef.current = false;
-                scanner.stop().catch(err => {
-                    // Ignore common cleanup errors during unmount
-                    const msg = err?.toString().toLowerCase() || "";
-                    if (!msg.includes("not scanning") && !msg.includes("not running") && !msg.includes("removechild")) {
-                        console.error("Scanner stop error:", err);
-                    }
-                });
+                // Immediate stop attempt if possible
+                if (isScanningRef.current) {
+                    isScanningRef.current = false;
+                    scanner.stop().catch(err => {
+                        // Ignore common cleanup errors
+                        const msg = err?.toString().toLowerCase() || "";
+                        if (!msg.includes("not scanning") && !msg.includes("not running") && !msg.includes("abort")) {
+                            console.warn("Scanner stop warning:", err);
+                        }
+                    });
+                }
             }
         };
     }, [onScanSuccess, onScanFailure, fps, qrbox]);
