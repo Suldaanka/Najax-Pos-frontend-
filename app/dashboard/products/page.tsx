@@ -154,7 +154,7 @@ export default function ProductsPage() {
             await productsApi.create(data);
             fetchProducts();
             setIsAddOpen(false);
-            setAddForm({ name: "", categoryId: "", price: 0, barcode: "", costPrice: 0, trackCartons: false, cartons: 0, piecesPerCarton: 0, loosePieces: 0, stock: 0 }); // reset
+            setAddForm({ name: "", categoryId: "", price: 0, barcode: "", costPrice: 0, trackCartons: false, cartons: 0, piecesPerCarton: 0, loosePieces: 0, stock: 0, unit: "pcs" }); // reset
             toast.success("Product added successfully");
         } catch (error: any) {
             toast.error("Failed to add product: " + error.message);
