@@ -73,6 +73,9 @@ export default function ProductsPage() {
         numBags: 0,
         kgPerBag: 50,
         costPerBag: 0,
+        trackBags: false,
+        bags: 0,
+        piecesPerBag: 0,
     });
 
     const [editForm, setEditForm] = useState({
@@ -91,6 +94,9 @@ export default function ProductsPage() {
         numBags: 0,
         kgPerBag: 50,
         costPerBag: 0,
+        trackBags: false,
+        bags: 0,
+        piecesPerBag: 0,
     });
 
     const businessId = (session?.user as any)?.activeBusinessId;
@@ -170,9 +176,14 @@ export default function ProductsPage() {
         
         const isKg = addForm.unit === 'kg';
         const trackCartons = isKg ? false : addForm.trackCartons;
-        const totalStock = trackCartons
-            ? (addForm.cartons * addForm.piecesPerCarton) + addForm.loosePieces
-            : addForm.stock;
+        const trackBags = isKg ? false : addForm.trackBags;
+        
+        let totalStock = addForm.stock;
+        if (trackCartons) {
+            totalStock = (addForm.cartons * addForm.piecesPerCarton) + addForm.loosePieces;
+        } else if (trackBags) {
+            totalStock = (addForm.bags * addForm.piecesPerBag) + addForm.loosePieces;
+        }
 
         const data = {
             businessId,
@@ -184,6 +195,7 @@ export default function ProductsPage() {
             stockQuantity: totalStock,
             unit: addForm.unit,
             piecesPerCarton: trackCartons ? addForm.piecesPerCarton : null,
+            piecesPerBag: trackBags ? addForm.piecesPerBag : null,
         };
 
         try {
@@ -205,7 +217,10 @@ export default function ProductsPage() {
                 useBulkCalc: false,
                 numBags: 0,
                 kgPerBag: 50,
-                costPerBag: 0
+                costPerBag: 0,
+                trackBags: false,
+                bags: 0,
+                piecesPerBag: 0,
             }); // reset
             toast.success("Product added successfully");
         } catch (error: any) {
@@ -218,9 +233,14 @@ export default function ProductsPage() {
 
         const isKg = editForm.unit === 'kg';
         const trackCartons = isKg ? false : editForm.trackCartons;
-        const totalStock = trackCartons
-            ? (editForm.cartons * editForm.piecesPerCarton) + editForm.loosePieces
-            : editForm.stock;
+        const trackBags = isKg ? false : editForm.trackBags;
+
+        let totalStock = editForm.stock;
+        if (trackCartons) {
+            totalStock = (editForm.cartons * editForm.piecesPerCarton) + editForm.loosePieces;
+        } else if (trackBags) {
+            totalStock = (editForm.bags * editForm.piecesPerBag) + editForm.loosePieces;
+        }
 
         const data = {
             name: editForm.name,
@@ -231,6 +251,7 @@ export default function ProductsPage() {
             stockQuantity: totalStock,
             unit: editForm.unit,
             piecesPerCarton: trackCartons ? editForm.piecesPerCarton : null,
+            piecesPerBag: trackBags ? editForm.piecesPerBag : null,
         };
 
         try {
@@ -252,7 +273,10 @@ export default function ProductsPage() {
                 useBulkCalc: false,
                 numBags: 0,
                 kgPerBag: 50,
-                costPerBag: 0
+                costPerBag: 0,
+                trackBags: false,
+                bags: 0,
+                piecesPerBag: 0,
             }); // reset
             toast.success("Product updated successfully");
         } catch (error: any) {
@@ -477,24 +501,40 @@ export default function ProductsPage() {
                                             {(() => {
                                                 const totalStock = addForm.trackCartons && addForm.unit !== 'kg'
                                                     ? (addForm.cartons * addForm.piecesPerCarton) + addForm.loosePieces
-                                                    : addForm.stock;
+                                                    : addForm.trackBags && addForm.unit !== 'kg'
+                                                        ? (addForm.bags * addForm.piecesPerBag) + addForm.loosePieces
+                                                        : addForm.stock;
                                                 return `$${(totalStock * addForm.costPrice).toFixed(2)}`;
                                             })()}
                                         </div>
                                     </div>
                                     {addForm.unit !== 'kg' && (
-                                        <div className="grid grid-cols-4 items-center gap-4">
-                                            <Label className="text-right">Track Cartons?</Label>
-                                            <div className="col-span-3 flex items-center gap-2">
-                                                <input
-                                                    type="checkbox"
-                                                    className="w-4 h-4 rounded border-gray-300"
-                                                    checked={addForm.trackCartons}
-                                                    onChange={(e) => setAddForm({ ...addForm, trackCartons: e.target.checked })}
-                                                />
-                                                <span className="text-sm text-muted-foreground">Yes, track by cartons</span>
+                                        <>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label className="text-right">Track Cartons?</Label>
+                                                <div className="col-span-3 flex items-center gap-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="w-4 h-4 rounded border-gray-300"
+                                                        checked={addForm.trackCartons}
+                                                        onChange={(e) => setAddForm({ ...addForm, trackCartons: e.target.checked, trackBags: false })}
+                                                    />
+                                                    <span className="text-sm text-muted-foreground">Yes, track by cartons</span>
+                                                </div>
                                             </div>
-                                        </div>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label className="text-right">Track Bags?</Label>
+                                                <div className="col-span-3 flex items-center gap-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="w-4 h-4 rounded border-gray-300"
+                                                        checked={addForm.trackBags}
+                                                        onChange={(e) => setAddForm({ ...addForm, trackBags: e.target.checked, trackCartons: false })}
+                                                    />
+                                                    <span className="text-sm text-muted-foreground">Yes, track by bags (e.g. Bag to Pcs)</span>
+                                                </div>
+                                            </div>
+                                        </>
                                     )}
                                     {addForm.trackCartons && addForm.unit !== 'kg' ? (
                                         <>
@@ -531,6 +571,41 @@ export default function ProductsPage() {
                                                 />
                                             </div>
                                         </>
+                                    ) : addForm.trackBags && addForm.unit !== 'kg' ? (
+                                        <>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="piecesPerBag" className="text-right">Pcs / Bag</Label>
+                                                <Input
+                                                    id="piecesPerBag"
+                                                    type="number"
+                                                    className="col-span-3"
+                                                    required={addForm.trackBags}
+                                                    value={addForm.piecesPerBag || ""}
+                                                    onChange={(e) => setAddForm({ ...addForm, piecesPerBag: parseInt(e.target.value) || 0 })}
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="bags" className="text-right">Bags</Label>
+                                                <Input
+                                                    id="bags"
+                                                    type="number"
+                                                    className="col-span-3"
+                                                    required={addForm.trackBags}
+                                                    value={addForm.bags || ""}
+                                                    onChange={(e) => setAddForm({ ...addForm, bags: parseInt(e.target.value) || 0 })}
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="loosePieces" className="text-right">Loose Pcs</Label>
+                                                <Input
+                                                    id="loosePieces"
+                                                    type="number"
+                                                    className="col-span-3"
+                                                    value={addForm.loosePieces || ""}
+                                                    onChange={(e) => setAddForm({ ...addForm, loosePieces: parseInt(e.target.value) || 0 })}
+                                                />
+                                            </div>
+                                        </>
                                     ) : (
                                         <div className="grid grid-cols-4 items-center gap-4">
                                             <Label htmlFor="stock" className="text-right">Total {addForm.unit === 'kg' ? 'Kg' : 'Pcs'}</Label>
@@ -540,7 +615,7 @@ export default function ProductsPage() {
                                                 type="number"
                                                 step={addForm.unit === 'kg' ? "0.01" : "1"}
                                                 className="col-span-3"
-                                                required={!addForm.trackCartons || addForm.unit === 'kg'}
+                                                required={(!addForm.trackCartons && !addForm.trackBags) || addForm.unit === 'kg'}
                                                 value={addForm.stock || ""}
                                                 onChange={(e) => setAddForm({ ...addForm, stock: parseFloat(e.target.value) || 0 })}
                                             />
@@ -662,7 +737,10 @@ export default function ProductsPage() {
                                                     trackCartons: !!product.piecesPerCarton,
                                                     cartons: product.piecesPerCarton ? Math.floor(product.stockQuantity / product.piecesPerCarton) : 0,
                                                     piecesPerCarton: product.piecesPerCarton || 0,
-                                                    loosePieces: product.piecesPerCarton ? product.stockQuantity % product.piecesPerCarton : 0,
+                                                    trackBags: !!product.piecesPerBag,
+                                                    bags: product.piecesPerBag ? Math.floor(product.stockQuantity / product.piecesPerBag) : 0,
+                                                    piecesPerBag: product.piecesPerBag || 0,
+                                                    loosePieces: (product.piecesPerCarton || product.piecesPerBag) ? (product.stockQuantity % (product.piecesPerCarton || product.piecesPerBag)) : product.stockQuantity,
                                                     stock: product.stockQuantity || 0,
                                                     unit: product.unit || "pcs",
                                                     useBulkCalc: false,
@@ -845,7 +923,9 @@ export default function ProductsPage() {
                                         {(() => {
                                             const totalStock = editForm.trackCartons && editForm.unit !== 'kg'
                                                 ? (editForm.cartons * editForm.piecesPerCarton) + editForm.loosePieces
-                                                : editForm.stock;
+                                                : editForm.trackBags && editForm.unit !== 'kg'
+                                                    ? (editForm.bags * editForm.piecesPerBag) + editForm.loosePieces
+                                                    : editForm.stock;
                                             return `$${(totalStock * editForm.costPrice).toFixed(2)}`;
                                         })()}
                                     </div>
@@ -864,56 +944,119 @@ export default function ProductsPage() {
                                         </div>
                                     </div>
                                 )}
-                                {editForm.trackCartons && editForm.unit !== 'kg' ? (
-                                    <>
+                                    {editForm.unit !== 'kg' && (
+                                        <>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label className="text-right">Track Cartons?</Label>
+                                                <div className="col-span-3 flex items-center gap-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="w-4 h-4 rounded border-gray-300"
+                                                        checked={editForm.trackCartons}
+                                                        onChange={(e) => setEditForm({ ...editForm, trackCartons: e.target.checked, trackBags: false })}
+                                                    />
+                                                    <span className="text-sm text-muted-foreground">Yes, track by cartons</span>
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label className="text-right">Track Bags?</Label>
+                                                <div className="col-span-3 flex items-center gap-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="w-4 h-4 rounded border-gray-300"
+                                                        checked={editForm.trackBags}
+                                                        onChange={(e) => setEditForm({ ...editForm, trackBags: e.target.checked, trackCartons: false })}
+                                                    />
+                                                    <span className="text-sm text-muted-foreground">Yes, track by bags (e.g. Bag to Pcs)</span>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                    {editForm.trackCartons && editForm.unit !== 'kg' ? (
+                                        <>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="edit-piecesPerCarton" className="text-right">Pcs / Carton</Label>
+                                                <Input
+                                                    id="edit-piecesPerCarton"
+                                                    type="number"
+                                                    className="col-span-3"
+                                                    required={editForm.trackCartons}
+                                                    value={editForm.piecesPerCarton || ""}
+                                                    onChange={(e) => setEditForm({ ...editForm, piecesPerCarton: parseInt(e.target.value) || 0 })}
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="edit-cartons" className="text-right">Cartons</Label>
+                                                <Input
+                                                    id="edit-cartons"
+                                                    type="number"
+                                                    className="col-span-3"
+                                                    required={editForm.trackCartons}
+                                                    value={editForm.cartons || ""}
+                                                    onChange={(e) => setEditForm({ ...editForm, cartons: parseInt(e.target.value) || 0 })}
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="edit-loosePieces" className="text-right">Loose Pcs</Label>
+                                                <Input
+                                                    id="edit-loosePieces"
+                                                    type="number"
+                                                    className="col-span-3"
+                                                    value={editForm.loosePieces || ""}
+                                                    onChange={(e) => setEditForm({ ...editForm, loosePieces: parseInt(e.target.value) || 0 })}
+                                                />
+                                            </div>
+                                        </>
+                                    ) : editForm.trackBags && editForm.unit !== 'kg' ? (
+                                        <>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="edit-piecesPerBag" className="text-right">Pcs / Bag</Label>
+                                                <Input
+                                                    id="edit-piecesPerBag"
+                                                    type="number"
+                                                    className="col-span-3"
+                                                    required={editForm.trackBags}
+                                                    value={editForm.piecesPerBag || ""}
+                                                    onChange={(e) => setEditForm({ ...editForm, piecesPerBag: parseInt(e.target.value) || 0 })}
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="edit-bags" className="text-right">Bags</Label>
+                                                <Input
+                                                    id="edit-bags"
+                                                    type="number"
+                                                    className="col-span-3"
+                                                    required={editForm.trackBags}
+                                                    value={editForm.bags || ""}
+                                                    onChange={(e) => setEditForm({ ...editForm, bags: parseInt(e.target.value) || 0 })}
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="edit-loosePieces" className="text-right">Loose Pcs</Label>
+                                                <Input
+                                                    id="edit-loosePieces"
+                                                    type="number"
+                                                    className="col-span-3"
+                                                    value={editForm.loosePieces || ""}
+                                                    onChange={(e) => setEditForm({ ...editForm, loosePieces: parseInt(e.target.value) || 0 })}
+                                                />
+                                            </div>
+                                        </>
+                                    ) : (
                                         <div className="grid grid-cols-4 items-center gap-4">
-                                            <Label htmlFor="edit-piecesPerCarton" className="text-right">Pcs / Carton</Label>
+                                            <Label htmlFor="edit-stock" className="text-right">Total {editForm.unit === 'kg' ? 'Kg' : 'Pcs'}</Label>
                                             <Input
-                                                id="edit-piecesPerCarton"
+                                                id="edit-stock"
+                                                name="stock"
                                                 type="number"
+                                                step={editForm.unit === 'kg' ? "0.01" : "1"}
                                                 className="col-span-3"
-                                                required={editForm.trackCartons}
-                                                value={editForm.piecesPerCarton || ""}
-                                                onChange={(e) => setEditForm({ ...editForm, piecesPerCarton: parseInt(e.target.value) || 0 })}
+                                                required={(!editForm.trackCartons && !editForm.trackBags) || editForm.unit === 'kg'}
+                                                value={editForm.stock || ""}
+                                                onChange={(e) => setEditForm({ ...editForm, stock: parseFloat(e.target.value) || 0 })}
                                             />
                                         </div>
-                                        <div className="grid grid-cols-4 items-center gap-4">
-                                            <Label htmlFor="edit-cartons" className="text-right">Cartons</Label>
-                                            <Input
-                                                id="edit-cartons"
-                                                type="number"
-                                                className="col-span-3"
-                                                required={editForm.trackCartons}
-                                                value={editForm.cartons || ""}
-                                                onChange={(e) => setEditForm({ ...editForm, cartons: parseInt(e.target.value) || 0 })}
-                                            />
-                                        </div>
-                                        <div className="grid grid-cols-4 items-center gap-4">
-                                            <Label htmlFor="edit-loosePieces" className="text-right">Loose Pcs</Label>
-                                            <Input
-                                                id="edit-loosePieces"
-                                                type="number"
-                                                className="col-span-3"
-                                                value={editForm.loosePieces || ""}
-                                                onChange={(e) => setEditForm({ ...editForm, loosePieces: parseInt(e.target.value) || 0 })}
-                                            />
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label htmlFor="edit-stock" className="text-right">Total {editForm.unit === 'kg' ? 'Kg' : 'Pcs'}</Label>
-                                        <Input
-                                            id="edit-stock"
-                                            name="stock"
-                                            type="number"
-                                            step={editForm.unit === 'kg' ? "0.01" : "1"}
-                                            className="col-span-3"
-                                            required={!editForm.trackCartons || editForm.unit === 'kg'}
-                                            value={editForm.stock || ""}
-                                            onChange={(e) => setEditForm({ ...editForm, stock: parseFloat(e.target.value) || 0 })}
-                                        />
-                                    </div>
-                                )}
+                                    )}
                                 <div className="grid grid-cols-4 items-center gap-4">
                                     <Label htmlFor="edit-price" className="text-right">Selling Price ($)</Label>
                                     <div className="col-span-3 space-y-1">

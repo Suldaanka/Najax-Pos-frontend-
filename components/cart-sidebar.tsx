@@ -130,11 +130,12 @@ export function CartSidebar() {
                                     
                                     {/* Fractional Quantity Presets for KG */}
                                     {item.unit?.toLowerCase() === "kg" && (
-                                        <div className="flex gap-1">
+                                        <div className="flex flex-wrap gap-1 mt-1">
                                             {[
-                                                { label: "1/4", val: 0.25 },
+                                                { label: "1kg", val: 1 },
                                                 { label: "1/2", val: 0.5 },
-                                                { label: "3/4", val: 0.75 }
+                                                { label: "1/4", val: 0.25 },
+                                                { label: "1/8", val: 0.125 }
                                             ].map((preset) => (
                                                 <button
                                                     key={preset.label}
@@ -142,23 +143,31 @@ export function CartSidebar() {
                                                         e.stopPropagation(); 
                                                         setCart(prev => prev.map(i => i.id === item.id ? { ...i, quantity: preset.val } : i));
                                                     }}
-                                                    className="px-1.5 py-0.5 rounded-sm bg-primary/10 text-[8px] font-black uppercase text-primary hover:bg-primary/20 transition-colors"
+                                                    className={cn(
+                                                        "px-2 py-0.5 rounded-sm text-[8px] font-black uppercase transition-colors border",
+                                                        item.quantity === preset.val 
+                                                            ? "bg-primary text-primary-foreground border-primary" 
+                                                            : "bg-primary/5 text-primary border-primary/10 hover:bg-primary/10"
+                                                    )}
                                                 >
                                                     {preset.label}
                                                 </button>
                                             ))}
-                                            <Input 
-                                                type="number" 
-                                                step="0.01" 
-                                                className="h-5 w-12 text-[8px] p-0 font-bold text-center bg-transparent border-primary/20" 
-                                                value={item.quantity}
-                                                onChange={(e) => {
-                                                    const val = parseFloat(e.target.value);
-                                                    if (!isNaN(val)) {
-                                                        setCart(prev => prev.map(i => i.id === item.id ? { ...i, quantity: val } : i));
-                                                    }
-                                                }}
-                                            />
+                                            <div className="flex items-center gap-1 ml-auto">
+                                                <Input 
+                                                    type="number" 
+                                                    step="0.01" 
+                                                    className="h-5 w-12 text-[8px] p-0 font-bold text-center bg-transparent border-primary/20" 
+                                                    value={item.quantity}
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value);
+                                                        if (!isNaN(val)) {
+                                                            setCart(prev => prev.map(i => i.id === item.id ? { ...i, quantity: val } : i));
+                                                        }
+                                                    }}
+                                                />
+                                                <span className="text-[8px] font-bold text-muted-foreground uppercase">kg</span>
+                                            </div>
                                         </div>
                                     )}
                                 </div>

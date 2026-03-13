@@ -101,6 +101,11 @@ const data = {
       url: "/dashboard/staff",
       icon: Users,
     },
+    {
+      title: "Settings",
+      url: "/dashboard/settings",
+      icon: Command,
+    },
   ],
   projects: [
     {
