@@ -134,7 +134,9 @@ export default function ProductsPage() {
     const handleAddProduct = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         
-        const totalStock = addForm.trackCartons
+        const isKg = addForm.unit === 'kg';
+        const trackCartons = isKg ? false : addForm.trackCartons;
+        const totalStock = trackCartons
             ? (addForm.cartons * addForm.piecesPerCarton) + addForm.loosePieces
             : addForm.stock;
 
@@ -147,7 +149,7 @@ export default function ProductsPage() {
             sellingPrice: addForm.price,
             stockQuantity: totalStock,
             unit: addForm.unit,
-            piecesPerCarton: addForm.trackCartons ? addForm.piecesPerCarton : null,
+            piecesPerCarton: trackCartons ? addForm.piecesPerCarton : null,
         };
 
         try {
@@ -164,7 +166,9 @@ export default function ProductsPage() {
     const handleEditProduct = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        const totalStock = editForm.trackCartons
+        const isKg = editForm.unit === 'kg';
+        const trackCartons = isKg ? false : editForm.trackCartons;
+        const totalStock = trackCartons
             ? (editForm.cartons * editForm.piecesPerCarton) + editForm.loosePieces
             : editForm.stock;
 
@@ -176,7 +180,7 @@ export default function ProductsPage() {
             sellingPrice: editForm.price,
             stockQuantity: totalStock,
             unit: editForm.unit,
-            piecesPerCarton: editForm.trackCartons ? editForm.piecesPerCarton : null,
+            piecesPerCarton: trackCartons ? editForm.piecesPerCarton : null,
         };
 
         try {
@@ -324,14 +328,14 @@ export default function ProductsPage() {
                                                 <SelectContent>
                                                     <SelectItem value="pcs">Pcs (Pieces)</SelectItem>
                                                     <SelectItem value="kg">Kg (Kilograms)</SelectItem>
-                                                    <SelectItem value="cnt">Cnt (Count)</SelectItem>
+                                                    <SelectItem value="ctn">Ctn (Carton)</SelectItem>
                                                     <SelectItem value="box">Box</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label htmlFor="costPrice" className="text-right">Total Cost ($)</Label>
+                                        <Label htmlFor="costPrice" className="text-right">Unit Cost ($)</Label>
                                         <Input
                                             id="costPrice"
                                             name="costPrice"
@@ -344,18 +348,31 @@ export default function ProductsPage() {
                                         />
                                     </div>
                                     <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label className="text-right">Track Cartons?</Label>
-                                        <div className="col-span-3 flex items-center gap-2">
-                                            <input
-                                                type="checkbox"
-                                                className="w-4 h-4 rounded border-gray-300"
-                                                checked={addForm.trackCartons}
-                                                onChange={(e) => setAddForm({ ...addForm, trackCartons: e.target.checked })}
-                                            />
-                                            <span className="text-sm text-muted-foreground">Yes, track by cartons</span>
+                                        <Label className="text-right text-xs text-muted-foreground uppercase font-bold">Total Val</Label>
+                                        <div className="col-span-3 text-sm font-black text-primary">
+                                            {(() => {
+                                                const totalStock = addForm.trackCartons && addForm.unit !== 'kg'
+                                                    ? (addForm.cartons * addForm.piecesPerCarton) + addForm.loosePieces
+                                                    : addForm.stock;
+                                                return `$${(totalStock * addForm.costPrice).toFixed(2)}`;
+                                            })()}
                                         </div>
                                     </div>
-                                    {addForm.trackCartons ? (
+                                    {addForm.unit !== 'kg' && (
+                                        <div className="grid grid-cols-4 items-center gap-4">
+                                            <Label className="text-right">Track Cartons?</Label>
+                                            <div className="col-span-3 flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    className="w-4 h-4 rounded border-gray-300"
+                                                    checked={addForm.trackCartons}
+                                                    onChange={(e) => setAddForm({ ...addForm, trackCartons: e.target.checked })}
+                                                />
+                                                <span className="text-sm text-muted-foreground">Yes, track by cartons</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {addForm.trackCartons && addForm.unit !== 'kg' ? (
                                         <>
                                             <div className="grid grid-cols-4 items-center gap-4">
                                                 <Label htmlFor="piecesPerCarton" className="text-right">Pcs / Carton</Label>
@@ -392,15 +409,16 @@ export default function ProductsPage() {
                                         </>
                                     ) : (
                                         <div className="grid grid-cols-4 items-center gap-4">
-                                            <Label htmlFor="stock" className="text-right">Total Pcs</Label>
+                                            <Label htmlFor="stock" className="text-right">Total {addForm.unit === 'kg' ? 'Kg' : 'Pcs'}</Label>
                                             <Input
                                                 id="stock"
                                                 name="stock"
                                                 type="number"
+                                                step={addForm.unit === 'kg' ? "0.01" : "1"}
                                                 className="col-span-3"
-                                                required={!addForm.trackCartons}
+                                                required={!addForm.trackCartons || addForm.unit === 'kg'}
                                                 value={addForm.stock || ""}
-                                                onChange={(e) => setAddForm({ ...addForm, stock: parseInt(e.target.value) || 0 })}
+                                                onChange={(e) => setAddForm({ ...addForm, stock: parseFloat(e.target.value) || 0 })}
                                             />
                                         </div>
                                     )}
@@ -417,15 +435,15 @@ export default function ProductsPage() {
                                                 onChange={(e) => setAddForm({ ...addForm, price: parseFloat(e.target.value) || 0 })}
                                             />
                                             {(() => {
-                                                const totalStock = addForm.trackCartons
+                                                const totalStock = addForm.trackCartons && addForm.unit !== 'kg'
                                                     ? (addForm.cartons * addForm.piecesPerCarton) + addForm.loosePieces
                                                     : addForm.stock;
                                                 if (totalStock > 0 && addForm.costPrice > 0) {
-                                                    const unitCost = addForm.costPrice / totalStock;
+                                                    const unitCost = addForm.costPrice; // It's already per unit now
                                                     const minPrice = unitCost * 1.2;
                                                     return (
                                                         <p className="text-[10px] text-muted-foreground">
-                                                            Unit Cost: ${unitCost.toFixed(2)} | Suggested Min Price: <span className="text-primary font-bold">${minPrice.toFixed(2)}</span>
+                                                            Unit Cost: ${unitCost.toFixed(2)} | Suggested Min Price (20% margin): <span className="text-primary font-bold">${minPrice.toFixed(2)}</span>
                                                         </p>
                                                     );
                                                 }
@@ -626,14 +644,14 @@ export default function ProductsPage() {
                                             <SelectContent>
                                                 <SelectItem value="pcs">Pcs (Pieces)</SelectItem>
                                                 <SelectItem value="kg">Kg (Kilograms)</SelectItem>
-                                                <SelectItem value="cnt">Cnt (Count)</SelectItem>
+                                                <SelectItem value="ctn">Ctn (Carton)</SelectItem>
                                                 <SelectItem value="box">Box</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="edit-costPrice" className="text-right">Total Cost ($)</Label>
+                                    <Label htmlFor="edit-costPrice" className="text-right">Unit Cost ($)</Label>
                                     <Input
                                         id="edit-costPrice"
                                         name="costPrice"
@@ -646,18 +664,31 @@ export default function ProductsPage() {
                                     />
                                 </div>
                                 <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label className="text-right">Track Cartons?</Label>
-                                    <div className="col-span-3 flex items-center gap-2">
-                                        <input
-                                            type="checkbox"
-                                            className="w-4 h-4 rounded border-gray-300"
-                                            checked={editForm.trackCartons}
-                                            onChange={(e) => setEditForm({ ...editForm, trackCartons: e.target.checked })}
-                                        />
-                                        <span className="text-sm text-muted-foreground">Yes, track by cartons</span>
+                                    <Label className="text-right text-xs text-muted-foreground uppercase font-bold">Total Val</Label>
+                                    <div className="col-span-3 text-sm font-black text-primary">
+                                        {(() => {
+                                            const totalStock = editForm.trackCartons && editForm.unit !== 'kg'
+                                                ? (editForm.cartons * editForm.piecesPerCarton) + editForm.loosePieces
+                                                : editForm.stock;
+                                            return `$${(totalStock * editForm.costPrice).toFixed(2)}`;
+                                        })()}
                                     </div>
                                 </div>
-                                {editForm.trackCartons ? (
+                                {editForm.unit !== 'kg' && (
+                                    <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label className="text-right">Track Cartons?</Label>
+                                        <div className="col-span-3 flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                className="w-4 h-4 rounded border-gray-300"
+                                                checked={editForm.trackCartons}
+                                                onChange={(e) => setEditForm({ ...editForm, trackCartons: e.target.checked })}
+                                            />
+                                            <span className="text-sm text-muted-foreground">Yes, track by cartons</span>
+                                        </div>
+                                    </div>
+                                )}
+                                {editForm.trackCartons && editForm.unit !== 'kg' ? (
                                     <>
                                         <div className="grid grid-cols-4 items-center gap-4">
                                             <Label htmlFor="edit-piecesPerCarton" className="text-right">Pcs / Carton</Label>
@@ -694,49 +725,50 @@ export default function ProductsPage() {
                                     </>
                                 ) : (
                                     <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label htmlFor="edit-stock" className="text-right">Total Pcs</Label>
+                                        <Label htmlFor="edit-stock" className="text-right">Total {editForm.unit === 'kg' ? 'Kg' : 'Pcs'}</Label>
                                         <Input
                                             id="edit-stock"
                                             name="stock"
                                             type="number"
+                                            step={editForm.unit === 'kg' ? "0.01" : "1"}
                                             className="col-span-3"
-                                            required={!editForm.trackCartons}
+                                            required={!editForm.trackCartons || editForm.unit === 'kg'}
                                             value={editForm.stock || ""}
-                                            onChange={(e) => setEditForm({ ...editForm, stock: parseInt(e.target.value) || 0 })}
+                                            onChange={(e) => setEditForm({ ...editForm, stock: parseFloat(e.target.value) || 0 })}
                                         />
                                     </div>
                                 )}
-                                    <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label htmlFor="edit-price" className="text-right">Selling Price ($)</Label>
-                                        <div className="col-span-3 space-y-1">
-                                            <Input
-                                                id="edit-price"
-                                                name="price"
-                                                type="number"
-                                                step="0.01"
-                                                value={editForm.price || ""}
-                                                onChange={(e) => setEditForm({ ...editForm, price: parseFloat(e.target.value) || 0 })}
-                                                required
-                                            />
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="edit-price" className="text-right">Selling Price ($)</Label>
+                                    <div className="col-span-3 space-y-1">
+                                        <Input
+                                            id="edit-price"
+                                            name="price"
+                                            type="number"
+                                            step="0.01"
+                                            value={editForm.price || ""}
+                                            onChange={(e) => setEditForm({ ...editForm, price: parseFloat(e.target.value) || 0 })}
+                                            required
+                                        />
                                         {(() => {
-                                            const totalStock = editForm.trackCartons
+                                            const totalStock = editForm.trackCartons && editForm.unit !== 'kg'
                                                 ? (editForm.cartons * editForm.piecesPerCarton) + editForm.loosePieces
                                                 : editForm.stock;
                                             if (totalStock > 0 && editForm.costPrice > 0) {
-                                                const unitCost = editForm.costPrice / totalStock;
+                                                const unitCost = editForm.costPrice; // Per unit
                                                 const minPrice = unitCost * 1.2;
                                                 return (
                                                     <p className="text-[10px] text-muted-foreground">
-                                                        Unit Cost: ${unitCost.toFixed(2)} | Suggested Min Price: <span className="text-primary font-bold">${minPrice.toFixed(2)}</span>
+                                                        Unit Cost: ${unitCost.toFixed(2)} | Suggested Min Price (20% margin): <span className="text-primary font-bold">${minPrice.toFixed(2)}</span>
                                                     </p>
                                                 );
                                             }
                                             return null;
                                         })()}
-                                    </div>
                                 </div>
                             </div>
-                            <DialogFooter>
+                        </div>
+                        <DialogFooter>
                                 <Button type="submit">Update Product</Button>
                             </DialogFooter>
                         </form>
