@@ -69,6 +69,10 @@ export default function ProductsPage() {
         loosePieces: 0,
         stock: 0,
         unit: "pcs",
+        useBulkCalc: false,
+        numBags: 0,
+        kgPerBag: 50,
+        costPerBag: 0,
     });
 
     const [editForm, setEditForm] = useState({
@@ -83,6 +87,10 @@ export default function ProductsPage() {
         loosePieces: 0,
         stock: 0,
         unit: "pcs",
+        useBulkCalc: false,
+        numBags: 0,
+        kgPerBag: 50,
+        costPerBag: 0,
     });
 
     const businessId = (session?.user as any)?.activeBusinessId;
@@ -93,6 +101,32 @@ export default function ProductsPage() {
             fetchCategories();
         }
     }, [businessId]);
+
+    // Bulk calculation for Add Form
+    useEffect(() => {
+        if (addForm.useBulkCalc && addForm.unit === 'kg') {
+            const totalStock = (addForm.numBags || 0) * (addForm.kgPerBag || 0);
+            const unitCost = addForm.kgPerBag > 0 ? (addForm.costPerBag || 0) / addForm.kgPerBag : 0;
+            setAddForm(prev => ({
+                ...prev,
+                stock: totalStock,
+                costPrice: parseFloat(unitCost.toFixed(2))
+            }));
+        }
+    }, [addForm.useBulkCalc, addForm.numBags, addForm.kgPerBag, addForm.costPerBag, addForm.unit]);
+
+    // Bulk calculation for Edit Form
+    useEffect(() => {
+        if (editForm.useBulkCalc && editForm.unit === 'kg') {
+            const totalStock = (editForm.numBags || 0) * (editForm.kgPerBag || 0);
+            const unitCost = editForm.kgPerBag > 0 ? (editForm.costPerBag || 0) / editForm.kgPerBag : 0;
+            setEditForm(prev => ({
+                ...prev,
+                stock: totalStock,
+                costPrice: parseFloat(unitCost.toFixed(2))
+            }));
+        }
+    }, [editForm.useBulkCalc, editForm.numBags, editForm.kgPerBag, editForm.costPerBag, editForm.unit]);
 
     const fetchProducts = async () => {
         setLoading(true);
@@ -156,7 +190,23 @@ export default function ProductsPage() {
             await productsApi.create(data);
             fetchProducts();
             setIsAddOpen(false);
-            setAddForm({ name: "", categoryId: "", price: 0, barcode: "", costPrice: 0, trackCartons: false, cartons: 0, piecesPerCarton: 0, loosePieces: 0, stock: 0, unit: "pcs" }); // reset
+            setAddForm({ 
+                name: "", 
+                categoryId: "", 
+                price: 0, 
+                barcode: "", 
+                costPrice: 0, 
+                trackCartons: false, 
+                cartons: 0, 
+                piecesPerCarton: 0, 
+                loosePieces: 0, 
+                stock: 0, 
+                unit: "pcs",
+                useBulkCalc: false,
+                numBags: 0,
+                kgPerBag: 50,
+                costPerBag: 0
+            }); // reset
             toast.success("Product added successfully");
         } catch (error: any) {
             toast.error("Failed to add product: " + error.message);
@@ -187,6 +237,23 @@ export default function ProductsPage() {
             await productsApi.update(editingProduct.id, data);
             fetchProducts();
             setIsEditOpen(false);
+            setEditForm({ 
+                name: "", 
+                categoryId: "", 
+                price: 0, 
+                barcode: "", 
+                costPrice: 0, 
+                trackCartons: false, 
+                cartons: 0, 
+                piecesPerCarton: 0, 
+                loosePieces: 0, 
+                stock: 0, 
+                unit: "pcs",
+                useBulkCalc: false,
+                numBags: 0,
+                kgPerBag: 50,
+                costPerBag: 0
+            }); // reset
             toast.success("Product updated successfully");
         } catch (error: any) {
             toast.error("Failed to update product: " + error.message);
@@ -334,6 +401,62 @@ export default function ProductsPage() {
                                             </Select>
                                         </div>
                                     </div>
+
+                                    {addForm.unit === 'kg' && (
+                                        <div className="grid grid-cols-4 items-center gap-4 bg-muted/40 p-4 rounded-xl border-2 border-primary/10 transition-all duration-300">
+                                            <div className="col-span-4 flex items-center gap-3 mb-2">
+                                                <input 
+                                                    type="checkbox" 
+                                                    id="useBulkCalc"
+                                                    checked={addForm.useBulkCalc}
+                                                    onChange={(e) => setAddForm({ ...addForm, useBulkCalc: e.target.checked })}
+                                                    className="w-5 h-5 rounded border-primary accent-primary cursor-pointer"
+                                                />
+                                                <Label htmlFor="useBulkCalc" className="font-black text-primary cursor-pointer select-none">BAG / BULK CALCULATOR</Label>
+                                            </div>
+                                            
+                                            {addForm.useBulkCalc && (
+                                                <>
+                                                    <div className="col-span-4 grid grid-cols-3 gap-3">
+                                                        <div className="space-y-1.5">
+                                                            <Label className="text-[10px] font-black uppercase text-muted-foreground px-1">Num Bags</Label>
+                                                            <Input 
+                                                                type="number" 
+                                                                placeholder="e.g. 50"
+                                                                className="h-9 focus-visible:ring-primary"
+                                                                value={addForm.numBags || ""}
+                                                                onChange={(e) => setAddForm({ ...addForm, numBags: parseInt(e.target.value) || 0 })}
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1.5">
+                                                            <Label className="text-[10px] font-black uppercase text-muted-foreground px-1">Kg / Bag</Label>
+                                                            <Input 
+                                                                type="number" 
+                                                                placeholder="e.g. 50"
+                                                                className="h-9 focus-visible:ring-primary"
+                                                                value={addForm.kgPerBag || ""}
+                                                                onChange={(e) => setAddForm({ ...addForm, kgPerBag: parseInt(e.target.value) || 0 })}
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1.5">
+                                                            <Label className="text-[10px] font-black uppercase text-muted-foreground px-1">Cost / Bag ($)</Label>
+                                                            <Input 
+                                                                type="number" 
+                                                                step="0.01"
+                                                                placeholder="e.g. 45"
+                                                                className="h-9 focus-visible:ring-primary"
+                                                                value={addForm.costPerBag || ""}
+                                                                onChange={(e) => setAddForm({ ...addForm, costPerBag: parseFloat(e.target.value) || 0 })}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <p className="col-span-4 text-[10px] text-primary/60 italic font-medium mt-1 bg-primary/5 p-2 rounded-md border border-primary/10">
+                                                        Calculated: <strong>{(addForm.numBags * addForm.kgPerBag).toFixed(2)} Kg</strong> total at <strong>${((addForm.costPerBag || 0) / (addForm.kgPerBag || 1)).toFixed(2)}</strong> per Kg.
+                                                    </p>
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
                                     <div className="grid grid-cols-4 items-center gap-4">
                                         <Label htmlFor="costPrice" className="text-right">Unit Cost ($)</Label>
                                         <Input
@@ -650,6 +773,62 @@ export default function ProductsPage() {
                                         </Select>
                                     </div>
                                 </div>
+
+                                {editForm.unit === 'kg' && (
+                                    <div className="grid grid-cols-4 items-center gap-4 bg-muted/40 p-4 rounded-xl border-2 border-primary/10 transition-all duration-300">
+                                        <div className="col-span-4 flex items-center gap-3 mb-2">
+                                            <input 
+                                                type="checkbox" 
+                                                id="edit-useBulkCalc"
+                                                checked={editForm.useBulkCalc}
+                                                onChange={(e) => setEditForm({ ...editForm, useBulkCalc: e.target.checked })}
+                                                className="w-5 h-5 rounded border-primary accent-primary cursor-pointer"
+                                            />
+                                            <Label htmlFor="edit-useBulkCalc" className="font-black text-primary cursor-pointer select-none">BAG / BULK CALCULATOR</Label>
+                                        </div>
+                                        
+                                        {editForm.useBulkCalc && (
+                                            <>
+                                                <div className="col-span-4 grid grid-cols-3 gap-3">
+                                                    <div className="space-y-1.5">
+                                                        <Label className="text-[10px] font-black uppercase text-muted-foreground px-1">Num Bags</Label>
+                                                        <Input 
+                                                            type="number" 
+                                                            placeholder="e.g. 50"
+                                                            className="h-9 focus-visible:ring-primary"
+                                                            value={editForm.numBags || ""}
+                                                            onChange={(e) => setEditForm({ ...editForm, numBags: parseInt(e.target.value) || 0 })}
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1.5">
+                                                        <Label className="text-[10px] font-black uppercase text-muted-foreground px-1">Kg / Bag</Label>
+                                                        <Input 
+                                                            type="number" 
+                                                            placeholder="e.g. 50"
+                                                            className="h-9 focus-visible:ring-primary"
+                                                            value={editForm.kgPerBag || ""}
+                                                            onChange={(e) => setEditForm({ ...editForm, kgPerBag: parseInt(e.target.value) || 0 })}
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1.5">
+                                                        <Label className="text-[10px] font-black uppercase text-muted-foreground px-1">Cost / Bag ($)</Label>
+                                                        <Input 
+                                                            type="number" 
+                                                            step="0.01"
+                                                            placeholder="e.g. 45"
+                                                            className="h-9 focus-visible:ring-primary"
+                                                            value={editForm.costPerBag || ""}
+                                                            onChange={(e) => setEditForm({ ...editForm, costPerBag: parseFloat(e.target.value) || 0 })}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <p className="col-span-4 text-[10px] text-primary/60 italic font-medium mt-1 bg-primary/5 p-2 rounded-md border border-primary/10">
+                                                    Calculated: <strong>{(editForm.numBags * editForm.kgPerBag).toFixed(2)} Kg</strong> total at <strong>${((editForm.costPerBag || 0) / (editForm.kgPerBag || 1)).toFixed(2)}</strong> per Kg.
+                                                </p>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
                                 <div className="grid grid-cols-4 items-center gap-4">
                                     <Label htmlFor="edit-costPrice" className="text-right">Unit Cost ($)</Label>
                                     <Input
