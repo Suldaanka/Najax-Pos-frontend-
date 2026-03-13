@@ -195,7 +195,7 @@ export default function ProductsPage() {
             stockQuantity: totalStock,
             unit: addForm.unit,
             piecesPerCarton: trackCartons ? addForm.piecesPerCarton : null,
-            piecesPerBag: trackBags ? addForm.piecesPerBag : null,
+            piecesPerBag: trackBags ? addForm.piecesPerBag : (isKg && addForm.useBulkCalc) ? addForm.kgPerBag : null,
         };
 
         try {
@@ -251,7 +251,7 @@ export default function ProductsPage() {
             stockQuantity: totalStock,
             unit: editForm.unit,
             piecesPerCarton: trackCartons ? editForm.piecesPerCarton : null,
-            piecesPerBag: trackBags ? editForm.piecesPerBag : null,
+            piecesPerBag: trackBags ? editForm.piecesPerBag : (isKg && editForm.useBulkCalc) ? editForm.kgPerBag : null,
         };
 
         try {
@@ -696,10 +696,27 @@ export default function ProductsPage() {
                                 <TableCell className="text-sm">${product.sellingPrice}</TableCell>
                                 <TableCell className="text-xs uppercase font-bold text-muted-foreground">{product.unit || "pcs"}</TableCell>
                                 <TableCell className="text-sm">
-                                    {product.piecesPerCarton ? (
-                                        <span>{Math.floor(product.stockQuantity / product.piecesPerCarton)} Ctns, {product.stockQuantity % product.piecesPerCarton} Pcs</span>
+                                    {product.unit === 'kg' ? (
+                                        <div className="flex flex-col">
+                                            <span className="font-bold">{product.stockQuantity} Kg</span>
+                                            {product.piecesPerBag && product.piecesPerBag > 0 && (
+                                                <span className="text-[10px] text-primary font-black uppercase tracking-tighter">
+                                                    {Math.floor(product.stockQuantity / product.piecesPerBag)} Bags, {(product.stockQuantity % product.piecesPerBag).toFixed(2)} Kg
+                                                </span>
+                                            )}
+                                        </div>
+                                    ) : product.piecesPerCarton ? (
+                                        <div className="flex flex-col">
+                                            <span>{Math.floor(product.stockQuantity / product.piecesPerCarton)} Ctns</span>
+                                            <span className="text-[10px] text-muted-foreground">{product.stockQuantity % product.piecesPerCarton} Pcs loose</span>
+                                        </div>
+                                    ) : product.piecesPerBag ? (
+                                        <div className="flex flex-col">
+                                            <span>{Math.floor(product.stockQuantity / product.piecesPerBag)} Bags</span>
+                                            <span className="text-[10px] text-muted-foreground">{product.stockQuantity % product.piecesPerBag} Pcs loose</span>
+                                        </div>
                                     ) : (
-                                        <span>{product.stockQuantity} Pcs</span>
+                                        <span>{product.stockQuantity} {product.unit || "Pcs"}</span>
                                     )}
                                 </TableCell>
                                 <TableCell>
