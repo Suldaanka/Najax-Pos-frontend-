@@ -196,10 +196,23 @@ export default function PurchasesPage() {
 
     // Calculate item total for footer
     const itemTotal = (item: PurchaseItem): number => {
-        if (item.unit === 'kg') return item.kg * item.costPrice;
-        if (item.productPiecesPerCarton > 0 && item.cartons > 0) return item.cartons * item.costPrice;
-        if (item.productPiecesPerBag > 0 && item.bags > 0) return item.bags * item.costPrice;
-        return (item.loosePieces || 0) * item.costPrice;
+        if (item.unit === 'kg') return (item.kg || 0) * (item.costPrice || 0);
+        
+        let totalVal = 0;
+        if (item.productPiecesPerCarton > 0 && (item.cartons > 0 || item.loosePieces > 0)) {
+            const costPerCtn = item.costPrice || 0;
+            const piecesPerCtn = item.piecesPerCarton || 1;
+            const costPerPiece = costPerCtn / piecesPerCtn;
+            totalVal = (item.cartons * costPerCtn) + (item.loosePieces * costPerPiece);
+        } else if (item.productPiecesPerBag > 0 && (item.bags > 0 || item.loosePiecesBag > 0)) {
+            const costPerBag = item.costPrice || 0;
+            const piecesPerBag = item.piecesPerBag || 1;
+            const costPerPiece = costPerBag / piecesPerBag;
+            totalVal = (item.bags * costPerBag) + (item.loosePiecesBag * costPerPiece);
+        } else {
+            totalVal = (item.loosePieces || 0) * (item.costPrice || 0);
+        }
+        return isNaN(totalVal) || !isFinite(totalVal) ? 0 : totalVal;
     };
 
     const handleAddPurchase = async (e: React.FormEvent) => {
@@ -303,15 +316,13 @@ export default function PurchasesPage() {
                                 </div>
 
                                 {/* Items */}
-                                <div className="space-y-3">
+                                <div className="space-y-4">
                                     <div className="flex items-center justify-between border-b pb-2">
-                                        <Label className="text-[10px] font-black uppercase tracking-widest">Items</Label>
-                                        <Button type="button" variant="outline" size="sm" className="h-7 text-[9px] uppercase font-bold" onClick={handleAddItem}>
-                                            <Plus className="mr-1 h-3 w-3" /> Add Row
-                                        </Button>
+                                        <Label className="text-[10px] font-black uppercase tracking-widest">Items List</Label>
                                     </div>
 
-                                    {form.items.map((item, index) => {
+                                    <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                                        {form.items.map((item, index) => {
                                         const isExpanded = expandedRows.has(index);
                                         const product = products.find(p => p.id === item.productId);
                                         const isCarton = item.productPiecesPerCarton > 0;
@@ -591,6 +602,7 @@ export default function PurchasesPage() {
                                         );
                                     })}
                                 </div>
+                                </div>
                             </div>
 
                             <DialogFooter className="sticky bottom-0 bg-background pt-4 border-t mt-4">
@@ -601,7 +613,12 @@ export default function PurchasesPage() {
                                             ${form.items.reduce((sum, item) => sum + itemTotal(item), 0).toFixed(2)}
                                         </span>
                                     </div>
-                                    <Button type="submit" className="w-full font-black uppercase tracking-widest text-[10px] h-11">Complete Purchase</Button>
+
+                                    <Button type="button" variant="outline" className="w-full border-dashed border-2 hover:bg-muted/50 font-black uppercase tracking-widest text-[9px] h-9" onClick={handleAddItem}>
+                                        <Plus className="mr-2 h-4 w-4" /> Add Another Item
+                                    </Button>
+
+                                    <Button type="submit" className="w-full font-black uppercase tracking-widest text-[10px] h-11 shadow-lg shadow-primary/20">Complete Purchase</Button>
                                 </div>
                             </DialogFooter>
                         </form>
