@@ -128,8 +128,8 @@ export function CartSidebar() {
                                         </button>
                                     </div>
                                     
-                                    {/* Fractional Quantity Presets for KG */}
-                                    {item.unit?.toLowerCase() === "kg" && (
+                                    {/* Fractional Quantity Presets for KG / LTR */}
+                                    {(item.unit?.toLowerCase() === "kg" || item.unit?.toLowerCase() === "ltr") && (
                                         <div className="flex flex-wrap gap-1 mt-1">
                                             {[
                                                 { label: "1kg", val: 1 },

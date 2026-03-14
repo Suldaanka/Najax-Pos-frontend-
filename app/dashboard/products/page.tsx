@@ -426,6 +426,7 @@ export default function ProductsPage() {
                                                 <SelectContent>
                                                     <SelectItem value="pcs">Pcs (Pieces)</SelectItem>
                                                     <SelectItem value="kg">Kg (Kilograms)</SelectItem>
+                                                    <SelectItem value="ltr">Ltr (Liter)</SelectItem>
                                                     <SelectItem value="ctn">Ctn (Carton)</SelectItem>
                                                     <SelectItem value="box">Box</SelectItem>
                                                 </SelectContent>
@@ -924,6 +925,7 @@ export default function ProductsPage() {
                                             <SelectContent>
                                                 <SelectItem value="pcs">Pcs (Pieces)</SelectItem>
                                                 <SelectItem value="kg">Kg (Kilograms)</SelectItem>
+                                                <SelectItem value="ltr">Ltr (Liter)</SelectItem>
                                                 <SelectItem value="ctn">Ctn (Carton)</SelectItem>
                                                 <SelectItem value="box">Box</SelectItem>
                                             </SelectContent>

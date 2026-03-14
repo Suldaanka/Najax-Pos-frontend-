@@ -156,7 +156,8 @@ export default function PurchasesPage() {
             if (i !== index) return item;
             const updated = { ...item, ...patch };
             // Recalculate quantity based on unit mode
-            if (updated.unit === 'kg') {
+            const isContinuous = updated.unit === 'kg' || updated.unit === 'ltr';
+            if (isContinuous) {
                 updated.quantity = updated.kg;
             } else if (updated.productPiecesPerCarton > 0 && updated.cartons > 0) {
                 updated.quantity = (updated.cartons * updated.piecesPerCarton) + updated.loosePieces;
@@ -196,7 +197,8 @@ export default function PurchasesPage() {
 
     // Calculate item total for footer
     const itemTotal = (item: PurchaseItem): number => {
-        if (item.unit === 'kg') return (item.kg || 0) * (item.costPrice || 0);
+        const isContinuous = item.unit === 'kg' || item.unit === 'ltr';
+        if (isContinuous) return (item.kg || 0) * (item.costPrice || 0);
         
         let totalVal = 0;
         if (item.productPiecesPerCarton > 0 && (item.cartons > 0 || item.loosePieces > 0)) {
@@ -223,7 +225,8 @@ export default function PurchasesPage() {
                 let qty = item.quantity;
                 let cost = item.costPrice;
 
-                if (item.unit === 'kg') {
+                const isContinuous = item.unit === 'kg' || item.unit === 'ltr';
+                if (isContinuous) {
                     qty = item.kg;
                 } else if (item.productPiecesPerCarton > 0 && item.cartons > 0) {
                     qty = (item.cartons * item.piecesPerCarton) + item.loosePieces;
@@ -425,6 +428,7 @@ export default function PurchasesPage() {
                                                                     <SelectContent>
                                                                         <SelectItem value="pcs">Pieces</SelectItem>
                                                                         <SelectItem value="kg">Kilograms</SelectItem>
+                                                                        <SelectItem value="ltr">Liter</SelectItem>
                                                                         <SelectItem value="carton">Cartons</SelectItem>
                                                                         <SelectItem value="bag">Bags</SelectItem>
                                                                     </SelectContent>
@@ -432,11 +436,11 @@ export default function PurchasesPage() {
                                                             )}
                                                         </div>
 
-                                                        {/* KG Mode */}
-                                                        {isKg && (
+                                                        {/* KG / LTR Mode */}
+                                                        {(isKg || item.unit === 'ltr') && (
                                                             <div className="grid grid-cols-2 gap-3">
                                                                 <div className="space-y-1">
-                                                                    <Label className="text-[9px] font-black uppercase text-muted-foreground">Total Kg</Label>
+                                                                    <Label className="text-[9px] font-black uppercase text-muted-foreground">Total {isKg ? 'Kg' : 'Liter'}</Label>
                                                                     <Input
                                                                         type="number" step="0.01" className="h-8 text-xs"
                                                                         value={item.kg || ""}
@@ -445,7 +449,7 @@ export default function PurchasesPage() {
                                                                     />
                                                                 </div>
                                                                 <div className="space-y-1">
-                                                                    <Label className="text-[9px] font-black uppercase text-muted-foreground">Cost / Kg ($)</Label>
+                                                                    <Label className="text-[9px] font-black uppercase text-muted-foreground">Cost / {isKg ? 'Kg' : 'Liter'} ($)</Label>
                                                                     <Input
                                                                         type="number" step="0.01" className="h-8 text-xs"
                                                                         value={item.costPrice || ""}
