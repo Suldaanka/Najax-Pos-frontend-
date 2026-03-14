@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Search, Trash2, Calendar, ShoppingBag, ArrowRight, Package } from "lucide-react";
+import { Plus, Search, Trash2, Calendar, ShoppingBag, Package, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,6 +34,44 @@ import { inventoryApi, productsApi } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { Badge } from "@/components/ui/badge";
 
+// Extended item with unit fields
+interface PurchaseItem {
+    productId: string;
+    costPrice: number;     // unit cost (per ctn / per bag / per pcs)
+    // Derived quantity fields — only the relevant ones are used
+    quantity: number;       // final quantity sent to backend (total pcs or kg)
+    // Carton tracking
+    cartons: number;
+    piecesPerCarton: number;
+    loosePieces: number;
+    // Bag tracking
+    bags: number;
+    piecesPerBag: number;
+    loosePiecesBag: number;
+    // Kg tracking
+    kg: number;
+    // Resolved from selected product
+    unit: string;
+    productPiecesPerCarton: number;
+    productPiecesPerBag: number;
+}
+
+const defaultItem = (): PurchaseItem => ({
+    productId: "",
+    costPrice: 0,
+    quantity: 0,
+    cartons: 0,
+    piecesPerCarton: 0,
+    loosePieces: 0,
+    bags: 0,
+    piecesPerBag: 0,
+    loosePiecesBag: 0,
+    kg: 0,
+    unit: "pcs",
+    productPiecesPerCarton: 0,
+    productPiecesPerBag: 0,
+});
+
 export default function PurchasesPage() {
     const { data: session } = useSession();
     const [purchases, setPurchases] = useState<any[]>([]);
@@ -42,11 +80,12 @@ export default function PurchasesPage() {
     const [loading, setLoading] = useState(true);
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set([0]));
 
     const [form, setForm] = useState({
         supplierId: "",
         reference: "",
-        items: [{ productId: "", quantity: 1, costPrice: 0 }]
+        items: [defaultItem()],
     });
 
     const businessId = (session?.user as any)?.activeBusinessId;
@@ -64,7 +103,7 @@ export default function PurchasesPage() {
         try {
             const data = await inventoryApi.getPurchases();
             setPurchases(data);
-        } catch (error: any) {
+        } catch {
             toast.error("Failed to fetch purchases");
         } finally {
             setLoading(false);
@@ -75,40 +114,122 @@ export default function PurchasesPage() {
         try {
             const data = await inventoryApi.getSuppliers();
             setSuppliers(data);
-        } catch (error) {}
+        } catch {}
     };
 
     const fetchProducts = async () => {
         try {
             const data = await productsApi.getAll(businessId);
             setProducts(data);
-        } catch (error) {}
+        } catch {}
     };
 
     const handleAddItem = () => {
-        setForm({ ...form, items: [...form.items, { productId: "", quantity: 1, costPrice: 0 }] });
+        const newItems = [...form.items, defaultItem()];
+        setForm({ ...form, items: newItems });
+        setExpandedRows(prev => new Set([...prev, newItems.length - 1]));
     };
 
     const handleRemoveItem = (index: number) => {
         setForm({ ...form, items: form.items.filter((_, i) => i !== index) });
+        setExpandedRows(prev => {
+            const next = new Set<number>();
+            prev.forEach(r => { if (r < index) next.add(r); else if (r > index) next.add(r - 1); });
+            return next;
+        });
     };
 
-    const handleItemChange = (index: number, field: string, value: any) => {
-        const newItems = [...form.items];
-        (newItems[index] as any)[field] = value;
+    const toggleRow = (index: number) => {
+        setExpandedRows(prev => {
+            const next = new Set(prev);
+            next.has(index) ? next.delete(index) : next.add(index);
+            return next;
+        });
+    };
+
+    const updateItem = (index: number, patch: Partial<PurchaseItem>) => {
+        const newItems = form.items.map((item, i) => {
+            if (i !== index) return item;
+            const updated = { ...item, ...patch };
+            // Recalculate quantity based on unit mode
+            if (updated.unit === 'kg') {
+                updated.quantity = updated.kg;
+            } else if (updated.productPiecesPerCarton > 0 && updated.cartons > 0) {
+                updated.quantity = (updated.cartons * updated.piecesPerCarton) + updated.loosePieces;
+            } else if (updated.productPiecesPerBag > 0 && updated.bags > 0) {
+                updated.quantity = (updated.bags * updated.piecesPerBag) + updated.loosePiecesBag;
+            } else {
+                updated.quantity = updated.loosePieces || 0;
+            }
+            return updated;
+        });
         setForm({ ...form, items: newItems });
+    };
+
+    const handleProductChange = (index: number, productId: string) => {
+        const product = products.find(p => p.id === productId);
+        if (!product) return;
+
+        const piecesPerCarton = product.piecesPerCarton || 0;
+        const piecesPerBag = (product.piecesPerBag && product.unit !== 'kg') ? product.piecesPerBag : 0;
+
+        updateItem(index, {
+            productId,
+            unit: product.unit || "pcs",
+            productPiecesPerCarton: piecesPerCarton,
+            productPiecesPerBag: piecesPerBag,
+            piecesPerCarton,
+            piecesPerBag,
+            costPrice: Number(product.costPrice) || 0,
+            cartons: 0,
+            bags: 0,
+            loosePieces: 0,
+            loosePiecesBag: 0,
+            kg: 0,
+            quantity: 0,
+        });
+    };
+
+    // Calculate item total for footer
+    const itemTotal = (item: PurchaseItem): number => {
+        if (item.unit === 'kg') return item.kg * item.costPrice;
+        if (item.productPiecesPerCarton > 0 && item.cartons > 0) return item.cartons * item.costPrice;
+        if (item.productPiecesPerBag > 0 && item.bags > 0) return item.bags * item.costPrice;
+        return (item.loosePieces || 0) * item.costPrice;
     };
 
     const handleAddPurchase = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const totalAmount = form.items.reduce((sum, item) => sum + (item.quantity * item.costPrice), 0);
-            await inventoryApi.createPurchase({ ...form, totalAmount });
+            // For backend: send quantity as total pcs/kg and costPrice as per-unit (per-pcs) cost
+            const apiItems = form.items.map(item => {
+                let qty = item.quantity;
+                let cost = item.costPrice;
+
+                if (item.unit === 'kg') {
+                    qty = item.kg;
+                } else if (item.productPiecesPerCarton > 0 && item.cartons > 0) {
+                    qty = (item.cartons * item.piecesPerCarton) + item.loosePieces;
+                    // Store per-pcs cost
+                    cost = item.piecesPerCarton > 0 ? parseFloat((item.costPrice / item.piecesPerCarton).toFixed(4)) : item.costPrice;
+                } else if (item.productPiecesPerBag > 0 && item.bags > 0) {
+                    qty = (item.bags * item.piecesPerBag) + item.loosePiecesBag;
+                    cost = item.piecesPerBag > 0 ? parseFloat((item.costPrice / item.piecesPerBag).toFixed(4)) : item.costPrice;
+                } else {
+                    qty = item.loosePieces || 0;
+                }
+
+                return { productId: item.productId, quantity: qty, costPrice: cost };
+            });
+
+            const totalAmount = form.items.reduce((sum, item) => sum + itemTotal(item), 0);
+            await inventoryApi.createPurchase({ ...form, items: apiItems, totalAmount });
             fetchPurchases();
             setIsAddOpen(false);
-            setForm({ supplierId: "", reference: "", items: [{ productId: "", quantity: 1, costPrice: 0 }] });
+            setForm({ supplierId: "", reference: "", items: [defaultItem()] });
+            setExpandedRows(new Set([0]));
             toast.success("Purchase recorded and stock updated!");
-        } catch (error: any) {
+        } catch {
             toast.error("Failed to record purchase");
         }
     };
@@ -119,10 +240,16 @@ export default function PurchasesPage() {
             await inventoryApi.deletePurchase(id);
             fetchPurchases();
             toast.success("Purchase record deleted");
-        } catch (error: any) {
+        } catch {
             toast.error("Failed to delete purchase");
         }
     };
+
+    const filteredPurchases = purchases.filter(p =>
+        !searchQuery ||
+        p.reference?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.supplier?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     return (
         <div className="flex flex-col gap-6 p-4">
@@ -139,15 +266,16 @@ export default function PurchasesPage() {
                             <Plus className="mr-2 h-4 w-4" /> New Purchase
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
+                    <DialogContent className="sm:max-w-[680px] max-h-[90vh] overflow-y-auto">
                         <form onSubmit={handleAddPurchase}>
                             <DialogHeader>
                                 <DialogTitle className="font-black uppercase tracking-tight">Record Purchase</DialogTitle>
                                 <DialogDescription className="text-xs">
-                                    Adding a purchase will automatically increase product stock levels.
+                                    Unit fields auto-fill from the selected product. Stock is updated automatically.
                                 </DialogDescription>
                             </DialogHeader>
                             <div className="grid gap-6 py-4">
+                                {/* Supplier + Reference */}
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label className="text-[10px] font-black uppercase tracking-widest">Supplier</Label>
@@ -164,6 +292,7 @@ export default function PurchasesPage() {
                                     </div>
                                 </div>
 
+                                {/* Items */}
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between border-b pb-2">
                                         <Label className="text-[10px] font-black uppercase tracking-widest">Items</Label>
@@ -171,39 +300,249 @@ export default function PurchasesPage() {
                                             <Plus className="mr-1 h-3 w-3" /> Add Row
                                         </Button>
                                     </div>
-                                    {form.items.map((item, index) => (
-                                        <div key={index} className="grid grid-cols-12 gap-2 items-end bg-muted/30 p-2 rounded-lg group animate-in slide-in-from-left-2">
-                                            <div className="col-span-6 space-y-1">
-                                                <Label className="text-[9px] font-bold uppercase text-muted-foreground">Product</Label>
-                                                <Select onValueChange={(val) => handleItemChange(index, 'productId', val)} required>
-                                                    <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Select Product" /></SelectTrigger>
-                                                    <SelectContent>
-                                                        {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                                                    </SelectContent>
-                                                </Select>
+
+                                    {form.items.map((item, index) => {
+                                        const isExpanded = expandedRows.has(index);
+                                        const product = products.find(p => p.id === item.productId);
+                                        const isCarton = item.productPiecesPerCarton > 0;
+                                        const isBag = item.productPiecesPerBag > 0;
+                                        const isKg = item.unit === 'kg';
+                                        const total = itemTotal(item);
+
+                                        return (
+                                            <div key={index} className="border border-border/60 rounded-xl overflow-hidden bg-muted/20 animate-in slide-in-from-left-2">
+                                                {/* Row Header */}
+                                                <div className="flex items-center gap-2 px-3 py-2 bg-muted/40 border-b border-border/40">
+                                                    <span className="text-[9px] font-black text-primary uppercase tracking-widest w-5">{index + 1}</span>
+                                                    <div className="flex-1 min-w-0">
+                                                        <Select value={item.productId} onValueChange={(val) => handleProductChange(index, val)} required>
+                                                            <SelectTrigger className="h-8 text-xs border-none bg-transparent shadow-none p-0 focus:ring-0">
+                                                                <SelectValue placeholder="Select Product..." />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {products.map(p => (
+                                                                    <SelectItem key={p.id} value={p.id}>
+                                                                        <span className="font-semibold">{p.name}</span>
+                                                                        <span className="ml-2 text-[9px] text-muted-foreground uppercase">{p.unit}</span>
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                    {item.productId && (
+                                                        <span className="text-[9px] font-black text-primary shrink-0">
+                                                            ${total.toFixed(2)}
+                                                        </span>
+                                                    )}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleRow(index)}
+                                                        className="text-muted-foreground hover:text-primary transition-colors shrink-0"
+                                                    >
+                                                        {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                                    </button>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-7 w-7 text-destructive/60 hover:text-destructive hover:bg-destructive/10 shrink-0"
+                                                        onClick={() => handleRemoveItem(index)}
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                </div>
+
+                                                {/* Row Detail (expanded) */}
+                                                {isExpanded && item.productId && (
+                                                    <div className="p-3 space-y-3">
+                                                        {/* Unit badge */}
+                                                        <div className="flex items-center gap-2">
+                                                            <Badge variant="outline" className="text-[8px] font-black uppercase px-2 py-0.5 bg-primary/5 border-primary/20 text-primary">
+                                                                <Package className="h-2.5 w-2.5 mr-1" />
+                                                                {isKg ? 'KG Unit' : isCarton ? 'Carton Unit' : isBag ? 'Bag Unit' : 'Piece Unit'}
+                                                            </Badge>
+                                                            {product && <span className="text-[9px] text-muted-foreground">{product.name}</span>}
+                                                        </div>
+
+                                                        {/* KG Mode */}
+                                                        {isKg && (
+                                                            <div className="grid grid-cols-2 gap-3">
+                                                                <div className="space-y-1">
+                                                                    <Label className="text-[9px] font-black uppercase text-muted-foreground">Total Kg</Label>
+                                                                    <Input
+                                                                        type="number" step="0.01" className="h-8 text-xs"
+                                                                        value={item.kg || ""}
+                                                                        onChange={e => updateItem(index, { kg: parseFloat(e.target.value) || 0 })}
+                                                                        required
+                                                                    />
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <Label className="text-[9px] font-black uppercase text-muted-foreground">Cost / Kg ($)</Label>
+                                                                    <Input
+                                                                        type="number" step="0.01" className="h-8 text-xs"
+                                                                        value={item.costPrice || ""}
+                                                                        onChange={e => updateItem(index, { costPrice: parseFloat(e.target.value) || 0 })}
+                                                                        required
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Carton Mode */}
+                                                        {isCarton && !isKg && (
+                                                            <div className="space-y-3">
+                                                                <div className="grid grid-cols-3 gap-2">
+                                                                    <div className="space-y-1">
+                                                                        <Label className="text-[9px] font-black uppercase text-muted-foreground">Cartons</Label>
+                                                                        <Input
+                                                                            type="number" className="h-8 text-xs"
+                                                                            value={item.cartons || ""}
+                                                                            onChange={e => updateItem(index, { cartons: parseInt(e.target.value) || 0 })}
+                                                                        />
+                                                                    </div>
+                                                                    <div className="space-y-1">
+                                                                        <Label className="text-[9px] font-black uppercase text-muted-foreground">Pcs / Ctn</Label>
+                                                                        <Input
+                                                                            type="number" className="h-8 text-xs"
+                                                                            value={item.piecesPerCarton || ""}
+                                                                            onChange={e => updateItem(index, { piecesPerCarton: parseInt(e.target.value) || 0 })}
+                                                                        />
+                                                                    </div>
+                                                                    <div className="space-y-1">
+                                                                        <Label className="text-[9px] font-black uppercase text-muted-foreground">Loose Pcs</Label>
+                                                                        <Input
+                                                                            type="number" className="h-8 text-xs"
+                                                                            value={item.loosePieces || ""}
+                                                                            onChange={e => updateItem(index, { loosePieces: parseInt(e.target.value) || 0 })}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <Label className="text-[9px] font-black uppercase text-muted-foreground">Cost / Carton ($)</Label>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <Input
+                                                                            type="number" step="0.01" className="h-8 text-xs flex-1"
+                                                                            value={item.costPrice || ""}
+                                                                            onChange={e => updateItem(index, { costPrice: parseFloat(e.target.value) || 0 })}
+                                                                            required
+                                                                        />
+                                                                        {item.piecesPerCarton > 0 && item.costPrice > 0 && (
+                                                                            <span className="text-[9px] text-primary font-black whitespace-nowrap">
+                                                                                = ${(item.costPrice / item.piecesPerCarton).toFixed(4)}/pcs
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                                {item.cartons > 0 && item.costPrice > 0 && (
+                                                                    <div className="bg-primary/5 rounded-lg p-2 text-[9px] text-muted-foreground flex justify-between">
+                                                                        <span>{item.cartons} ctns × ${item.costPrice}/ctn = <strong className="text-primary">${(item.cartons * item.costPrice).toFixed(2)}</strong></span>
+                                                                        <span>Total pcs: {(item.cartons * item.piecesPerCarton) + item.loosePieces}</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
+
+                                                        {/* Bag Mode */}
+                                                        {isBag && !isKg && !isCarton && (
+                                                            <div className="space-y-3">
+                                                                <div className="grid grid-cols-3 gap-2">
+                                                                    <div className="space-y-1">
+                                                                        <Label className="text-[9px] font-black uppercase text-muted-foreground">Bags</Label>
+                                                                        <Input
+                                                                            type="number" className="h-8 text-xs"
+                                                                            value={item.bags || ""}
+                                                                            onChange={e => updateItem(index, { bags: parseInt(e.target.value) || 0 })}
+                                                                        />
+                                                                    </div>
+                                                                    <div className="space-y-1">
+                                                                        <Label className="text-[9px] font-black uppercase text-muted-foreground">Pcs / Bag</Label>
+                                                                        <Input
+                                                                            type="number" className="h-8 text-xs"
+                                                                            value={item.piecesPerBag || ""}
+                                                                            onChange={e => updateItem(index, { piecesPerBag: parseInt(e.target.value) || 0 })}
+                                                                        />
+                                                                    </div>
+                                                                    <div className="space-y-1">
+                                                                        <Label className="text-[9px] font-black uppercase text-muted-foreground">Loose Pcs</Label>
+                                                                        <Input
+                                                                            type="number" className="h-8 text-xs"
+                                                                            value={item.loosePiecesBag || ""}
+                                                                            onChange={e => updateItem(index, { loosePiecesBag: parseInt(e.target.value) || 0 })}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <Label className="text-[9px] font-black uppercase text-muted-foreground">Cost / Bag ($)</Label>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <Input
+                                                                            type="number" step="0.01" className="h-8 text-xs flex-1"
+                                                                            value={item.costPrice || ""}
+                                                                            onChange={e => updateItem(index, { costPrice: parseFloat(e.target.value) || 0 })}
+                                                                            required
+                                                                        />
+                                                                        {item.piecesPerBag > 0 && item.costPrice > 0 && (
+                                                                            <span className="text-[9px] text-primary font-black whitespace-nowrap">
+                                                                                = ${(item.costPrice / item.piecesPerBag).toFixed(4)}/pcs
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                                {item.bags > 0 && item.costPrice > 0 && (
+                                                                    <div className="bg-primary/5 rounded-lg p-2 text-[9px] text-muted-foreground flex justify-between">
+                                                                        <span>{item.bags} bags × ${item.costPrice}/bag = <strong className="text-primary">${(item.bags * item.costPrice).toFixed(2)}</strong></span>
+                                                                        <span>Total pcs: {(item.bags * item.piecesPerBag) + item.loosePiecesBag}</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
+
+                                                        {/* Plain Pcs Mode — no carton/bag info on product */}
+                                                        {!isKg && !isCarton && !isBag && (
+                                                            <div className="grid grid-cols-2 gap-3">
+                                                                <div className="space-y-1">
+                                                                    <Label className="text-[9px] font-black uppercase text-muted-foreground">Quantity (pcs)</Label>
+                                                                    <Input
+                                                                        type="number" className="h-8 text-xs"
+                                                                        value={item.loosePieces || ""}
+                                                                        onChange={e => updateItem(index, { loosePieces: parseInt(e.target.value) || 0 })}
+                                                                        required
+                                                                    />
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <Label className="text-[9px] font-black uppercase text-muted-foreground">Cost / Pcs ($)</Label>
+                                                                    <Input
+                                                                        type="number" step="0.01" className="h-8 text-xs"
+                                                                        value={item.costPrice || ""}
+                                                                        onChange={e => updateItem(index, { costPrice: parseFloat(e.target.value) || 0 })}
+                                                                        required
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {/* Collapsed summary */}
+                                                {!isExpanded && item.productId && (
+                                                    <div className="px-3 py-1.5 text-[9px] text-muted-foreground flex items-center gap-2">
+                                                        <Package className="h-3 w-3" />
+                                                        <span>{product?.name}</span>
+                                                        <span className="ml-auto font-black text-primary">${total.toFixed(2)}</span>
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div className="col-span-2 space-y-1">
-                                                <Label className="text-[9px] font-bold uppercase text-muted-foreground">Qty</Label>
-                                                <Input type="number" className="h-9 text-xs" value={item.quantity} onChange={e => handleItemChange(index, 'quantity', parseInt(e.target.value))} required />
-                                            </div>
-                                            <div className="col-span-3 space-y-1">
-                                                <Label className="text-[9px] font-bold uppercase text-muted-foreground">Cost ($)</Label>
-                                                <Input type="number" step="0.01" className="h-9 text-xs" value={item.costPrice} onChange={e => handleItemChange(index, 'costPrice', parseFloat(e.target.value))} required />
-                                            </div>
-                                            <div className="col-span-1 flex justify-center pb-0.5">
-                                                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleRemoveItem(index)}>
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
+
                             <DialogFooter className="sticky bottom-0 bg-background pt-4 border-t mt-4">
                                 <div className="flex flex-col w-full gap-4">
                                     <div className="flex justify-between items-center px-2">
                                         <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Total Amount</span>
-                                        <span className="font-black text-lg text-primary">${form.items.reduce((sum, i) => sum + (i.quantity * i.costPrice), 0).toFixed(2)}</span>
+                                        <span className="font-black text-lg text-primary">
+                                            ${form.items.reduce((sum, item) => sum + itemTotal(item), 0).toFixed(2)}
+                                        </span>
                                     </div>
                                     <Button type="submit" className="w-full font-black uppercase tracking-widest text-[10px] h-11">Complete Purchase</Button>
                                 </div>
@@ -232,9 +571,9 @@ export default function PurchasesPage() {
                     <TableBody>
                         {loading ? (
                             <TableRow><TableCell colSpan={5} className="text-center py-10 opacity-50 font-medium tracking-widest uppercase text-[10px]">Loading Purchases...</TableCell></TableRow>
-                        ) : purchases.length === 0 ? (
+                        ) : filteredPurchases.length === 0 ? (
                             <TableRow><TableCell colSpan={5} className="text-center py-10 opacity-50 font-medium tracking-widest uppercase text-[10px]">No purchase history</TableCell></TableRow>
-                        ) : purchases.map((p) => (
+                        ) : filteredPurchases.map((p) => (
                             <TableRow key={p.id} className="border-border/50 hover:bg-muted/20 transition-colors">
                                 <TableCell className="text-xs font-bold text-muted-foreground uppercase flex gap-2 items-center">
                                     <Calendar className="h-3 w-3 text-primary/60" /> {new Date(p.createdAt).toLocaleDateString()}
