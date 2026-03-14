@@ -37,6 +37,8 @@ import { Badge } from "@/components/ui/badge";
 // Extended item with unit fields
 interface PurchaseItem {
     productId: string;
+    itemName: string;       // used when manualMode is true
+    manualMode: boolean;    // true = free text, false = pick from products
     costPrice: number;     // unit cost (per ctn / per bag / per pcs)
     // Derived quantity fields — only the relevant ones are used
     quantity: number;       // final quantity sent to backend (total pcs or kg)
@@ -58,6 +60,8 @@ interface PurchaseItem {
 
 const defaultItem = (): PurchaseItem => ({
     productId: "",
+    itemName: "",
+    manualMode: false,
     costPrice: 0,
     quantity: 0,
     cartons: 0,
@@ -219,7 +223,13 @@ export default function PurchasesPage() {
                     qty = item.loosePieces || 0;
                 }
 
-                return { productId: item.productId, quantity: qty, costPrice: cost };
+                return { 
+                    productId: item.manualMode ? undefined : item.productId, 
+                    itemName: item.manualMode ? item.itemName : undefined,
+                    quantity: qty, 
+                    costPrice: cost 
+                };
+
             });
 
             const totalAmount = form.items.reduce((sum, item) => sum + itemTotal(item), 0);
@@ -314,22 +324,48 @@ export default function PurchasesPage() {
                                                 {/* Row Header */}
                                                 <div className="flex items-center gap-2 px-3 py-2 bg-muted/40 border-b border-border/40">
                                                     <span className="text-[9px] font-black text-primary uppercase tracking-widest w-5">{index + 1}</span>
-                                                    <div className="flex-1 min-w-0">
-                                                        <Select value={item.productId} onValueChange={(val) => handleProductChange(index, val)} required>
-                                                            <SelectTrigger className="h-8 text-xs border-none bg-transparent shadow-none p-0 focus:ring-0">
-                                                                <SelectValue placeholder="Select Product..." />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {products.map(p => (
-                                                                    <SelectItem key={p.id} value={p.id}>
-                                                                        <span className="font-semibold">{p.name}</span>
-                                                                        <span className="ml-2 text-[9px] text-muted-foreground uppercase">{p.unit}</span>
-                                                                    </SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
+
+                                                    {/* Mode toggle */}
+                                                    <div className="flex bg-muted rounded-md p-0.5 shrink-0">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => updateItem(index, { manualMode: false, itemName: "" })}
+                                                            className={`px-2 py-0.5 text-[8px] font-black uppercase rounded transition-all ${!item.manualMode ? "bg-background text-primary shadow-sm" : "text-muted-foreground"}`}
+                                                        >Products</button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => updateItem(index, { manualMode: true, productId: "", unit: "pcs", productPiecesPerCarton: 0, productPiecesPerBag: 0 })}
+                                                            className={`px-2 py-0.5 text-[8px] font-black uppercase rounded transition-all ${item.manualMode ? "bg-background text-primary shadow-sm" : "text-muted-foreground"}`}
+                                                        >Manual</button>
                                                     </div>
-                                                    {item.productId && (
+
+                                                    <div className="flex-1 min-w-0">
+                                                        {item.manualMode ? (
+                                                            <Input
+                                                                placeholder="Type item name..."
+                                                                className="h-8 text-xs border-none bg-transparent shadow-none p-0 focus-visible:ring-0 placeholder:text-muted-foreground/50"
+                                                                value={item.itemName}
+                                                                onChange={e => updateItem(index, { itemName: e.target.value })}
+                                                                required={item.manualMode}
+                                                            />
+                                                        ) : (
+                                                            <Select value={item.productId} onValueChange={(val) => handleProductChange(index, val)} required={!item.manualMode}>
+                                                                <SelectTrigger className="h-8 text-xs border-none bg-transparent shadow-none p-0 focus:ring-0">
+                                                                    <SelectValue placeholder="Select Product..." />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    {products.map(p => (
+                                                                        <SelectItem key={p.id} value={p.id}>
+                                                                            <span className="font-semibold">{p.name}</span>
+                                                                            <span className="ml-2 text-[9px] text-muted-foreground uppercase">{p.unit}</span>
+                                                                        </SelectItem>
+                                                                    ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                        )}
+                                                    </div>
+
+                                                    {(item.productId || item.itemName) && (
                                                         <span className="text-[9px] font-black text-primary shrink-0">
                                                             ${total.toFixed(2)}
                                                         </span>
@@ -353,15 +389,36 @@ export default function PurchasesPage() {
                                                 </div>
 
                                                 {/* Row Detail (expanded) */}
-                                                {isExpanded && item.productId && (
+                                                {isExpanded && (item.productId || (item.manualMode && item.itemName)) && (
                                                     <div className="p-3 space-y-3">
-                                                        {/* Unit badge */}
-                                                        <div className="flex items-center gap-2">
+                                                        {/* Unit badge + manual unit selector */}
+                                                        <div className="flex items-center gap-2 flex-wrap">
                                                             <Badge variant="outline" className="text-[8px] font-black uppercase px-2 py-0.5 bg-primary/5 border-primary/20 text-primary">
                                                                 <Package className="h-2.5 w-2.5 mr-1" />
                                                                 {isKg ? 'KG Unit' : isCarton ? 'Carton Unit' : isBag ? 'Bag Unit' : 'Piece Unit'}
                                                             </Badge>
                                                             {product && <span className="text-[9px] text-muted-foreground">{product.name}</span>}
+                                                            {/* Show unit selector only in manual mode */}
+                                                            {item.manualMode && (
+                                                                <Select
+                                                                    value={item.unit}
+                                                                    onValueChange={(val) => updateItem(index, {
+                                                                        unit: val,
+                                                                        productPiecesPerCarton: val === 'carton' ? (item.piecesPerCarton || 48) : 0,
+                                                                        productPiecesPerBag: val === 'bag' ? (item.piecesPerBag || 12) : 0,
+                                                                    })}
+                                                                >
+                                                                    <SelectTrigger className="h-6 text-[9px] w-28 font-black">
+                                                                        <SelectValue />
+                                                                    </SelectTrigger>
+                                                                    <SelectContent>
+                                                                        <SelectItem value="pcs">Pieces</SelectItem>
+                                                                        <SelectItem value="kg">Kilograms</SelectItem>
+                                                                        <SelectItem value="carton">Cartons</SelectItem>
+                                                                        <SelectItem value="bag">Bags</SelectItem>
+                                                                    </SelectContent>
+                                                                </Select>
+                                                            )}
                                                         </div>
 
                                                         {/* KG Mode */}
@@ -523,10 +580,10 @@ export default function PurchasesPage() {
                                                 )}
 
                                                 {/* Collapsed summary */}
-                                                {!isExpanded && item.productId && (
+                                                {!isExpanded && (item.productId || item.itemName) && (
                                                     <div className="px-3 py-1.5 text-[9px] text-muted-foreground flex items-center gap-2">
                                                         <Package className="h-3 w-3" />
-                                                        <span>{product?.name}</span>
+                                                        <span>{item.manualMode ? item.itemName : product?.name}</span>
                                                         <span className="ml-auto font-black text-primary">${total.toFixed(2)}</span>
                                                     </div>
                                                 )}
