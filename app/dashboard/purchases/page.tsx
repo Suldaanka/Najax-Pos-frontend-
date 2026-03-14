@@ -85,6 +85,8 @@ export default function PurchasesPage() {
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set([0]));
+    const [selectedPurchase, setSelectedPurchase] = useState<any>(null);
+    const [isViewOpen, setIsViewOpen] = useState(false);
 
     const [form, setForm] = useState({
         supplierId: "",
@@ -628,6 +630,85 @@ export default function PurchasesPage() {
                         </form>
                     </DialogContent>
                 </Dialog>
+
+                {/* View Purchase Details Dialog */}
+                <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+                    <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2 text-primary">
+                                <ShoppingBag className="h-5 w-5" />
+                                Purchase Details
+                            </DialogTitle>
+                            <DialogDescription className="text-[10px] font-black uppercase tracking-widest opacity-60">
+                                {selectedPurchase?.supplier?.name} • {selectedPurchase?.createdAt && new Date(selectedPurchase.createdAt).toLocaleDateString()}
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="space-y-6 py-4">
+                            <div className="grid grid-cols-2 gap-4 bg-muted/30 p-4 rounded-xl border border-border/50">
+                                <div>
+                                    <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Supplier</p>
+                                    <p className="font-bold text-sm tracking-tight">{selectedPurchase?.supplier?.name}</p>
+                                    <p className="text-[10px] opacity-70">{selectedPurchase?.supplier?.phone}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Total Amount</p>
+                                    <p className="font-black text-xl text-primary">${Number(selectedPurchase?.totalAmount || 0).toFixed(2)}</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+                                    <Package className="h-3 w-3" />
+                                    Purchased Items
+                                </h4>
+                                <div className="border rounded-xl overflow-hidden bg-background">
+                                    <Table>
+                                        <TableHeader className="bg-muted/50">
+                                            <TableRow className="hover:bg-transparent border-border/50">
+                                                <TableHead className="text-[9px] font-black uppercase h-8">Item Name</TableHead>
+                                                <TableHead className="text-[9px] font-black uppercase h-8">Quantity</TableHead>
+                                                <TableHead className="text-[9px] font-black uppercase h-8">Cost/Unit</TableHead>
+                                                <TableHead className="text-[9px] font-black uppercase h-8 text-right">Total</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {selectedPurchase?.items?.map((item: any, idx: number) => (
+                                                <TableRow key={idx} className="border-border/50 hover:bg-muted/10">
+                                                    <TableCell className="py-3">
+                                                        <div className="flex flex-col">
+                                                            <span className="font-bold text-xs tracking-tight">
+                                                                {item.product?.name || item.itemName || "Manual Item"}
+                                                            </span>
+                                                            <Badge variant="outline" className="text-[8px] font-black px-1.5 h-4 w-fit opacity-60 mt-1 uppercase">
+                                                                {item.product?.unit || "manual"}
+                                                            </Badge>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-xs font-black py-3">
+                                                        {Number(item.quantity)}
+                                                    </TableCell>
+                                                    <TableCell className="text-xs font-bold py-3">
+                                                        ${Number(item.costPrice).toFixed(2)}
+                                                    </TableCell>
+                                                    <TableCell className="text-xs font-black text-primary text-right py-3">
+                                                        ${(Number(item.quantity) * Number(item.costPrice)).toFixed(2)}
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsViewOpen(false)} className="rounded-lg h-10 font-black uppercase text-[10px] tracking-widest">
+                                Close
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
 
             <div className="relative">
@@ -678,9 +759,24 @@ export default function PurchasesPage() {
                                     ${Number(p.totalAmount).toFixed(2)}
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-all" onClick={() => handleDelete(p.id)}>
-                                        <Trash2 className="h-3.5 w-3.5" />
-                                    </Button>
+                                    <div className="flex justify-end gap-1">
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="h-8 w-8 rounded-lg hover:bg-primary/10 hover:text-primary transition-all" 
+                                            onClick={() => { setSelectedPurchase(p); setIsViewOpen(true); }}
+                                        >
+                                            <Search className="h-3.5 w-3.5" />
+                                        </Button>
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="h-8 w-8 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-all" 
+                                            onClick={() => handleDelete(p.id)}
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                        </Button>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ))}

@@ -434,7 +434,7 @@ export default function ProductsPage() {
                                         </div>
                                     </div>
 
-                                    {addForm.unit === 'kg' && (
+                                    {(addForm.unit === 'kg' || addForm.unit === 'ltr') && (
                                         <div className="grid grid-cols-4 items-center gap-4 bg-muted/40 p-4 rounded-xl border-2 border-primary/10 transition-all duration-300">
                                             <div className="col-span-4 flex items-center gap-3 mb-2">
                                                 <input 
@@ -444,30 +444,36 @@ export default function ProductsPage() {
                                                     onChange={(e) => setAddForm({ ...addForm, useBulkCalc: e.target.checked })}
                                                     className="w-5 h-5 rounded border-primary accent-primary cursor-pointer"
                                                 />
-                                                <Label htmlFor="useBulkCalc" className="font-black text-primary cursor-pointer select-none">BAG / BULK CALCULATOR</Label>
+                                                <Label htmlFor="useBulkCalc" className="font-black text-primary cursor-pointer select-none">
+                                                    {addForm.unit === 'kg' ? 'BAG / BULK CALCULATOR' : 'TANK / CAN CALCULATOR'}
+                                                </Label>
                                             </div>
                                             
                                             {addForm.useBulkCalc && (
                                                 <>
                                                     <div className="col-span-4 grid grid-cols-3 gap-3">
                                                         <div className="space-y-1.5">
-                                                            <Label className="text-[10px] font-black uppercase text-muted-foreground px-1">Num Bags</Label>
+                                                            <Label className="text-[10px] font-black uppercase text-muted-foreground px-1">
+                                                                {addForm.unit === 'kg' ? 'Num Bags' : 'Num Tanks/Cans'}
+                                                            </Label>
                                                             <Input 
                                                                 type="number" 
-                                                                placeholder="e.g. 50"
+                                                                placeholder={addForm.unit === 'kg' ? "e.g. 50" : "e.g. 10"}
                                                                 className="h-9 focus-visible:ring-primary"
                                                                 value={addForm.numBags || ""}
                                                                 onChange={(e) => setAddForm({ ...addForm, numBags: parseInt(e.target.value) || 0 })}
                                                             />
                                                         </div>
                                                         <div className="space-y-1.5">
-                                                            <Label className="text-[10px] font-black uppercase text-muted-foreground px-1">Kg / Bag</Label>
+                                                            <Label className="text-[10px] font-black uppercase text-muted-foreground px-1">
+                                                                {addForm.unit === 'kg' ? 'Weight / Bag' : 'Liter / Tank'}
+                                                            </Label>
                                                             <Input 
                                                                 type="number" 
-                                                                placeholder="e.g. 50"
+                                                                placeholder={addForm.unit === 'kg' ? "e.g. 25" : "e.g. 20"}
                                                                 className="h-9 focus-visible:ring-primary"
-                                                                value={addForm.kgPerBag || ""}
-                                                                onChange={(e) => setAddForm({ ...addForm, kgPerBag: parseInt(e.target.value) || 0 })}
+                                                                value={addForm.piecesPerBag || ""}
+                                                                onChange={(e) => setAddForm({ ...addForm, piecesPerBag: parseInt(e.target.value) || 0 })}
                                                             />
                                                         </div>
                                                         <div className="space-y-1.5">
@@ -483,7 +489,7 @@ export default function ProductsPage() {
                                                         </div>
                                                     </div>
                                                     <p className="col-span-4 text-[10px] text-primary/60 italic font-medium mt-1 bg-primary/5 p-2 rounded-md border border-primary/10">
-                                                        Calculated: <strong>{(addForm.numBags * addForm.kgPerBag).toFixed(2)} Kg</strong> total at <strong>${((addForm.costPerBag || 0) / (addForm.kgPerBag || 1)).toFixed(2)}</strong> per Kg.
+                                                        Calculated: <strong>{(addForm.numBags * addForm.piecesPerBag).toFixed(2)} {addForm.unit === 'kg' ? 'Kg' : 'Litre'}</strong> total at <strong>${((addForm.costPerBag || 0) / (addForm.piecesPerBag || 1)).toFixed(2)}</strong> per {addForm.unit === 'kg' ? 'Kg' : 'Litre'}.
                                                     </p>
                                                 </>
                                             )}
@@ -826,9 +832,9 @@ export default function ProductsPage() {
                                                     loosePieces: (product.piecesPerCarton || (product.piecesPerBag && product.unit !== 'kg')) ? (product.stockQuantity % (product.piecesPerCarton || product.piecesPerBag)) : product.stockQuantity,
                                                     stock: product.stockQuantity || 0,
                                                     unit: product.unit || "pcs",
-                                                    useBulkCalc: product.unit === 'kg' && !!product.piecesPerBag,
-                                                    numBags: (product.unit === 'kg' && product.piecesPerBag) ? Math.floor(product.stockQuantity / product.piecesPerBag) : 0,
-                                                    kgPerBag: (product.unit === 'kg' && product.piecesPerBag) ? product.piecesPerBag : 50,
+                                                    useBulkCalc: (product.unit === 'kg' || product.unit === 'ltr') && !!product.piecesPerBag,
+                                                    numBags: ((product.unit === 'kg' || product.unit === 'ltr') && product.piecesPerBag) ? Math.floor(product.stockQuantity / product.piecesPerBag) : 0,
+                                                    kgPerBag: (product.unit === 'kg' && product.piecesPerBag) ? product.piecesPerBag : 50, // This will be replaced by piecesPerBag for ltr
                                                     costPerBag: 0,
                                                 });
                                                 setIsEditOpen(true);
@@ -932,8 +938,7 @@ export default function ProductsPage() {
                                         </Select>
                                     </div>
                                 </div>
-
-                                {editForm.unit === 'kg' && (
+                                {(editForm.unit === 'kg' || editForm.unit === 'ltr') && (
                                     <div className="grid grid-cols-4 items-center gap-4 bg-muted/40 p-4 rounded-xl border-2 border-primary/10 transition-all duration-300">
                                         <div className="col-span-4 flex items-center gap-3 mb-2">
                                             <input 
@@ -943,30 +948,36 @@ export default function ProductsPage() {
                                                 onChange={(e) => setEditForm({ ...editForm, useBulkCalc: e.target.checked })}
                                                 className="w-5 h-5 rounded border-primary accent-primary cursor-pointer"
                                             />
-                                            <Label htmlFor="edit-useBulkCalc" className="font-black text-primary cursor-pointer select-none">BAG / BULK CALCULATOR</Label>
+                                            <Label htmlFor="edit-useBulkCalc" className="font-black text-primary cursor-pointer select-none">
+                                                {editForm.unit === 'kg' ? 'BAG / BULK CALCULATOR' : 'TANK / CAN CALCULATOR'}
+                                            </Label>
                                         </div>
                                         
                                         {editForm.useBulkCalc && (
                                             <>
                                                 <div className="col-span-4 grid grid-cols-3 gap-3">
                                                     <div className="space-y-1.5">
-                                                        <Label className="text-[10px] font-black uppercase text-muted-foreground px-1">Num Bags</Label>
+                                                        <Label className="text-[10px] font-black uppercase text-muted-foreground px-1">
+                                                            {editForm.unit === 'kg' ? 'Num Bags' : 'Num Tanks/Cans'}
+                                                        </Label>
                                                         <Input 
                                                             type="number" 
-                                                            placeholder="e.g. 50"
+                                                            placeholder={editForm.unit === 'kg' ? "e.g. 50" : "e.g. 10"}
                                                             className="h-9 focus-visible:ring-primary"
                                                             value={editForm.numBags || ""}
                                                             onChange={(e) => setEditForm({ ...editForm, numBags: parseInt(e.target.value) || 0 })}
                                                         />
                                                     </div>
                                                     <div className="space-y-1.5">
-                                                        <Label className="text-[10px] font-black uppercase text-muted-foreground px-1">Kg / Bag</Label>
+                                                        <Label className="text-[10px] font-black uppercase text-muted-foreground px-1">
+                                                            {editForm.unit === 'kg' ? 'Weight / Bag' : 'Liter / Tank'}
+                                                        </Label>
                                                         <Input 
                                                             type="number" 
-                                                            placeholder="e.g. 50"
+                                                            placeholder={editForm.unit === 'kg' ? "e.g. 25" : "e.g. 20"}
                                                             className="h-9 focus-visible:ring-primary"
-                                                            value={editForm.kgPerBag || ""}
-                                                            onChange={(e) => setEditForm({ ...editForm, kgPerBag: parseInt(e.target.value) || 0 })}
+                                                            value={editForm.piecesPerBag || ""}
+                                                            onChange={(e) => setEditForm({ ...editForm, piecesPerBag: parseInt(e.target.value) || 0 })}
                                                         />
                                                     </div>
                                                     <div className="space-y-1.5">

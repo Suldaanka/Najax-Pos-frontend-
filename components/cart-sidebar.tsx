@@ -132,7 +132,7 @@ export function CartSidebar() {
                                     {(item.unit?.toLowerCase() === "kg" || item.unit?.toLowerCase() === "ltr") && (
                                         <div className="flex flex-wrap gap-1 mt-1">
                                             {[
-                                                { label: "1kg", val: 1 },
+                                                { label: item.unit?.toLowerCase() === "ltr" ? "1L" : "1kg", val: 1 },
                                                 { label: "1/2", val: 0.5 },
                                                 { label: "1/4", val: 0.25 },
                                                 { label: "1/8", val: 0.125 }
