@@ -676,10 +676,31 @@ export default function ProductsPage() {
                                                 value={addForm.price || ""}
                                                 onChange={(e) => setAddForm({ ...addForm, price: parseFloat(e.target.value) || 0 })}
                                             />
-                                        {(addForm.costPrice > 0) && (
-                                            <p className="text-[10px] text-muted-foreground">
-                                                Cost/Pcs: ${addForm.costPrice.toFixed(4)} | Suggested Min (20% margin): <span className="text-primary font-bold">${(addForm.costPrice * 1.2).toFixed(2)}</span>
-                                            </p>
+                                        {addForm.costPrice > 0 && (
+                                            <div className="space-y-1.5 pt-0.5">
+                                                <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">Suggested prices — click to apply:</p>
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {[10, 20, 30, 50].map(margin => {
+                                                        const suggested = parseFloat((addForm.costPrice * (1 + margin / 100)).toFixed(2));
+                                                        const isSelected = addForm.price === suggested;
+                                                        return (
+                                                            <button
+                                                                key={margin}
+                                                                type="button"
+                                                                onClick={() => setAddForm({ ...addForm, price: suggested })}
+                                                                className={`px-2 py-0.5 rounded-full text-[10px] font-black border transition-all ${
+                                                                    isSelected
+                                                                        ? 'bg-primary text-primary-foreground border-primary'
+                                                                        : 'border-primary/40 text-primary hover:bg-primary/10'
+                                                                }`}
+                                                            >
+                                                                +{margin}% = ${suggested}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                                <p className="text-[10px] text-muted-foreground">Cost/pcs: <span className="font-bold">${addForm.costPrice.toFixed(4)}</span></p>
+                                            </div>
                                         )}
                                         </div>
                                     </div>
@@ -1154,10 +1175,31 @@ export default function ProductsPage() {
                                             onChange={(e) => setEditForm({ ...editForm, price: parseFloat(e.target.value) || 0 })}
                                             required
                                         />
-                                        {(editForm.stock > 0 && editForm.costPrice > 0) && (
-                                            <p className="text-[10px] text-muted-foreground">
-                                                Unit Cost: ${editForm.costPrice.toFixed(2)} | Suggested Min Price (20% margin): <span className="text-primary font-bold">${(editForm.costPrice * 1.2).toFixed(2)}</span>
-                                            </p>
+                                        {editForm.costPrice > 0 && (
+                                            <div className="space-y-1.5 pt-0.5">
+                                                <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">Suggested prices — click to apply:</p>
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {[10, 20, 30, 50].map(margin => {
+                                                        const suggested = parseFloat((editForm.costPrice * (1 + margin / 100)).toFixed(2));
+                                                        const isSelected = editForm.price === suggested;
+                                                        return (
+                                                            <button
+                                                                key={margin}
+                                                                type="button"
+                                                                onClick={() => setEditForm({ ...editForm, price: suggested })}
+                                                                className={`px-2 py-0.5 rounded-full text-[10px] font-black border transition-all ${
+                                                                    isSelected
+                                                                        ? 'bg-primary text-primary-foreground border-primary'
+                                                                        : 'border-primary/40 text-primary hover:bg-primary/10'
+                                                                }`}
+                                                            >
+                                                                +{margin}% = ${suggested}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                                <p className="text-[10px] text-muted-foreground">Cost/pcs: <span className="font-bold">${editForm.costPrice.toFixed(4)}</span></p>
+                                            </div>
                                         )}
                                     </div>
                                     </div>
