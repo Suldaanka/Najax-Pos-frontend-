@@ -275,31 +275,51 @@ export function CartSidebar() {
                     </div>
 
                     {/* Payment Selection */}
-                    <div className="grid grid-cols-4 gap-1.5">
-                        {[
-                            { id: 'Cash', label: 'Cash', icon: <Banknote className="h-3.5 w-3.5" /> },
-                            { id: 'ZAAD', label: 'ZAAD', icon: <CreditCard className="h-3.5 w-3.5" /> },
-                            { id: 'eDahab', label: 'Edahab', icon: <Laptop className="h-3.5 w-3.5" /> },
-                            { id: 'Loan', label: 'Loan', icon: <HandCoins className="h-3.5 w-3.5" /> },
-                        ].map((p) => (
-                            <button
-                                key={p.id}
-                                onClick={() => setPaymentMethod(p.id)}
-                                className={cn(
-                                    "flex flex-col items-center justify-center py-2 rounded-none border transition-all gap-1 relative overflow-hidden group",
-                                    paymentMethod === p.id
-                                        ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/10"
-                                        : "bg-background border-border text-muted-foreground hover:border-primary/30 hover:text-primary hover:bg-primary/[0.02]"
-                                )}
-                            >
-                                <div className={cn("p-1 rounded-sm transition-colors", paymentMethod === p.id ? "bg-white/20" : "bg-primary/5 group-hover:bg-primary/10")}>
-                                    {p.icon}
+                    {(() => {
+                        const isWalkIn = !selectedCustomerId || selectedCustomerId === 'cash';
+                        return (
+                            <div className="space-y-2">
+                                <div className="grid grid-cols-4 gap-1.5">
+                                    {[
+                                        { id: 'Cash', label: 'Cash', icon: <Banknote className="h-3.5 w-3.5" /> },
+                                        { id: 'ZAAD', label: 'ZAAD', icon: <CreditCard className="h-3.5 w-3.5" /> },
+                                        { id: 'eDahab', label: 'Edahab', icon: <Laptop className="h-3.5 w-3.5" /> },
+                                        { id: 'Loan', label: 'Loan', icon: <HandCoins className="h-3.5 w-3.5" />, requiresCustomer: true },
+                                    ].map((p) => {
+                                        const isDisabled = p.requiresCustomer && isWalkIn;
+                                        return (
+                                            <button
+                                                key={p.id}
+                                                type="button"
+                                                disabled={isDisabled}
+                                                title={isDisabled ? 'Select a customer to use Loan/Due' : undefined}
+                                                onClick={() => !isDisabled && setPaymentMethod(p.id)}
+                                                className={cn(
+                                                    "flex flex-col items-center justify-center py-2 rounded-none border transition-all gap-1 relative overflow-hidden group",
+                                                    isDisabled
+                                                        ? "opacity-30 cursor-not-allowed bg-muted border-border text-muted-foreground"
+                                                        : paymentMethod === p.id
+                                                            ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/10"
+                                                            : "bg-background border-border text-muted-foreground hover:border-primary/30 hover:text-primary hover:bg-primary/[0.02]"
+                                                )}
+                                            >
+                                                <div className={cn("p-1 rounded-sm transition-colors", paymentMethod === p.id ? "bg-white/20" : "bg-primary/5 group-hover:bg-primary/10")}>
+                                                    {p.icon}
+                                                </div>
+                                                <span className="text-[8px] font-black uppercase tracking-tighter truncate w-full text-center">{p.label}</span>
+                                                {paymentMethod === p.id && <div className="absolute top-0 right-0 p-0.5"><CheckCircle2 className="h-2 w-2" /></div>}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
-                                <span className="text-[8px] font-black uppercase tracking-tighter truncate w-full text-center">{p.label}</span>
-                                {paymentMethod === p.id && <div className="absolute top-0 right-0 p-0.5"><CheckCircle2 className="h-2 w-2" /></div>}
-                            </button>
-                        ))}
-                    </div>
+                                {isWalkIn && (
+                                    <p className="text-[9px] text-muted-foreground font-semibold text-center">
+                                        Select a customer to enable <span className="text-primary font-black">Loan / Due</span>
+                                    </p>
+                                )}
+                            </div>
+                        );
+                    })()}
 
                     <Button
                         className="w-full h-12 rounded-none bg-primary text-primary-foreground text-xs font-black shadow-lg shadow-primary/10 hover:bg-primary/90 transition-all disabled:opacity-50 uppercase tracking-[0.2em]"

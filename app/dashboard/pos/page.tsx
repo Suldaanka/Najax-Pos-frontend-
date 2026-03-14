@@ -32,6 +32,24 @@ export default function POSPage() {
     const [isCameraOpen, setIsCameraOpen] = useState(false);
     const { addToCart, isCartOpen, setIsCartOpen, cart } = useCart();
 
+    // Shared beep sound for every item added (click or scan)
+    const playBeep = () => {
+        try {
+            const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = "sine";
+            oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.12, audioCtx.currentTime + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + 0.12);
+        } catch { /* silence audio errors */ }
+    };
+
     const businessId = (session?.user as any)?.activeBusinessId;
 
     useEffect(() => {
@@ -219,6 +237,7 @@ export default function POSPage() {
                                         if (product) {
                                             if (product.stockQuantity > 0) {
                                                 addToCart(product);
+                                                playBeep();
                                                 toast.success(`Scanned: ${product.name}`, {
                                                     description: "Added to cart successfully",
                                                     position: "bottom-center",
@@ -284,9 +303,12 @@ export default function POSPage() {
                         {filteredProducts.map((product) => (
                             <div
                                 key={product.id}
-                                onClick={() =>
-                                    product.stockQuantity > 0 && addToCart(product)
-                                }
+                                onClick={() => {
+                                    if (product.stockQuantity > 0) {
+                                        addToCart(product);
+                                        playBeep();
+                                    }
+                                }}
                                 className={cn(
                                     "group relative flex flex-col bg-card hover:bg-accent/50 transition-all rounded-2xl cursor-pointer shadow-sm hover:shadow-xl border border-border/50 hover:border-primary/20 active:scale-[0.98] duration-300",
                                     product.stockQuantity === 0 &&
