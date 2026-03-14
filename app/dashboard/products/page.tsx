@@ -63,6 +63,7 @@ export default function ProductsPage() {
         price: 0,
         barcode: "",
         costPrice: 0,
+        costPerCarton: 0,
         trackCartons: false,
         cartons: 0,
         piecesPerCarton: 0,
@@ -84,6 +85,7 @@ export default function ProductsPage() {
         price: 0,
         barcode: "",
         costPrice: 0,
+        costPerCarton: 0,
         trackCartons: false,
         cartons: 0,
         piecesPerCarton: 0,
@@ -208,6 +210,7 @@ export default function ProductsPage() {
                 price: 0, 
                 barcode: "", 
                 costPrice: 0, 
+                costPerCarton: 0,
                 trackCartons: false, 
                 cartons: 0, 
                 piecesPerCarton: 0, 
@@ -266,6 +269,7 @@ export default function ProductsPage() {
                 price: 0, 
                 barcode: "", 
                 costPrice: 0, 
+                costPerCarton: 0,
                 trackCartons: false, 
                 cartons: 0, 
                 piecesPerCarton: 0, 
@@ -484,32 +488,69 @@ export default function ProductsPage() {
                                             )}
                                         </div>
                                     )}
-                                    <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label htmlFor="costPrice" className="text-right">Unit Cost ($)</Label>
-                                        <Input
-                                            id="costPrice"
-                                            name="costPrice"
-                                            type="number"
-                                            step="0.01"
-                                            className="col-span-3"
-                                            required
-                                            value={addForm.costPrice || ""}
-                                            onChange={(e) => setAddForm({ ...addForm, costPrice: parseFloat(e.target.value) || 0 })}
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label className="text-right text-xs text-muted-foreground uppercase font-bold">Total Val</Label>
-                                        <div className="col-span-3 text-sm font-black text-primary">
-                                            {(() => {
-                                                const totalStock = addForm.trackCartons && addForm.unit !== 'kg'
-                                                    ? (addForm.cartons * addForm.piecesPerCarton) + addForm.loosePieces
-                                                    : addForm.trackBags && addForm.unit !== 'kg'
-                                                        ? (addForm.bags * addForm.piecesPerBag) + addForm.loosePieces
-                                                        : addForm.stock;
-                                                return `$${(totalStock * addForm.costPrice).toFixed(2)}`;
-                                            })()}
-                                        </div>
-                                    </div>
+                                    {/* Cost entry — smart: per-carton when tracking cartons, else per-piece */}
+                                    {addForm.trackCartons && addForm.unit !== 'kg' ? (
+                                        <>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="costPerCarton" className="text-right">Cost / Ctn ($)</Label>
+                                                <div className="col-span-3 space-y-0.5">
+                                                    <Input
+                                                        id="costPerCarton"
+                                                        type="number"
+                                                        step="0.01"
+                                                        placeholder="e.g. 24"
+                                                        value={addForm.costPerCarton || ""}
+                                                        onChange={(e) => {
+                                                            const cpc = parseFloat(e.target.value) || 0;
+                                                            const cpp = addForm.piecesPerCarton > 0 ? cpc / addForm.piecesPerCarton : 0;
+                                                            setAddForm({ ...addForm, costPerCarton: cpc, costPrice: parseFloat(cpp.toFixed(4)) });
+                                                        }}
+                                                    />
+                                                    {addForm.piecesPerCarton > 0 && addForm.costPerCarton > 0 && (
+                                                        <p className="text-[10px] text-primary font-black">
+                                                            Cost/Pcs: ${(addForm.costPerCarton / addForm.piecesPerCarton).toFixed(4)}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label className="text-right text-xs text-muted-foreground uppercase font-bold">Total Val</Label>
+                                                <div className="col-span-3 text-sm font-black text-primary">
+                                                    ${(addForm.cartons * addForm.costPerCarton).toFixed(2)}
+                                                    <span className="text-[10px] font-normal text-muted-foreground ml-1">
+                                                        ({addForm.cartons} ctns × ${addForm.costPerCarton}/ctn)
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="costPrice" className="text-right">Unit Cost ($)</Label>
+                                                <Input
+                                                    id="costPrice"
+                                                    name="costPrice"
+                                                    type="number"
+                                                    step="0.01"
+                                                    className="col-span-3"
+                                                    required
+                                                    value={addForm.costPrice || ""}
+                                                    onChange={(e) => setAddForm({ ...addForm, costPrice: parseFloat(e.target.value) || 0 })}
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label className="text-right text-xs text-muted-foreground uppercase font-bold">Total Val</Label>
+                                                <div className="col-span-3 text-sm font-black text-primary">
+                                                    {(() => {
+                                                        const totalStock = addForm.trackBags && addForm.unit !== 'kg'
+                                                            ? (addForm.bags * addForm.piecesPerBag) + addForm.loosePieces
+                                                            : addForm.stock;
+                                                        return `$${(totalStock * addForm.costPrice).toFixed(2)}`;
+                                                    })()}
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
                                     {addForm.unit !== 'kg' && (
                                         <>
                                             <div className="grid grid-cols-4 items-center gap-4">
@@ -635,9 +676,9 @@ export default function ProductsPage() {
                                                 value={addForm.price || ""}
                                                 onChange={(e) => setAddForm({ ...addForm, price: parseFloat(e.target.value) || 0 })}
                                             />
-                                        {(addForm.stock > 0 && addForm.costPrice > 0) && (
+                                        {(addForm.costPrice > 0) && (
                                             <p className="text-[10px] text-muted-foreground">
-                                                Unit Cost: ${addForm.costPrice.toFixed(2)} | Suggested Min Price (20% margin): <span className="text-primary font-bold">${(addForm.costPrice * 1.2).toFixed(2)}</span>
+                                                Cost/Pcs: ${addForm.costPrice.toFixed(4)} | Suggested Min (20% margin): <span className="text-primary font-bold">${(addForm.costPrice * 1.2).toFixed(2)}</span>
                                             </p>
                                         )}
                                         </div>
@@ -753,6 +794,7 @@ export default function ProductsPage() {
                                                     price: Number(product.sellingPrice) || 0,
                                                     barcode: product.barcode || "",
                                                     costPrice: Number(product.costPrice) || 0,
+                                                    costPerCarton: product.piecesPerCarton ? Number(product.costPrice) * product.piecesPerCarton : 0,
                                                     trackCartons: !!product.piecesPerCarton,
                                                     cartons: product.piecesPerCarton ? Math.floor(product.stockQuantity / product.piecesPerCarton) : 0,
                                                     piecesPerCarton: product.piecesPerCarton || 0,
@@ -923,46 +965,70 @@ export default function ProductsPage() {
                                         )}
                                     </div>
                                 )}
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="edit-costPrice" className="text-right">Unit Cost ($)</Label>
-                                    <Input
-                                        id="edit-costPrice"
-                                        name="costPrice"
-                                        type="number"
-                                        step="0.01"
-                                        className="col-span-3"
-                                        required
-                                        value={editForm.costPrice || ""}
-                                        onChange={(e) => setEditForm({ ...editForm, costPrice: parseFloat(e.target.value) || 0 })}
-                                    />
-                                </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label className="text-right text-xs text-muted-foreground uppercase font-bold">Total Val</Label>
-                                    <div className="col-span-3 text-sm font-black text-primary">
-                                        {(() => {
-                                            const totalStock = editForm.trackCartons && editForm.unit !== 'kg'
-                                                ? (editForm.cartons * editForm.piecesPerCarton) + editForm.loosePieces
-                                                : editForm.trackBags && editForm.unit !== 'kg'
-                                                    ? (editForm.bags * editForm.piecesPerBag) + editForm.loosePieces
-                                                    : editForm.stock;
-                                            return `$${(totalStock * editForm.costPrice).toFixed(2)}`;
-                                        })()}
-                                    </div>
-                                </div>
-                                {editForm.unit !== 'kg' && (
-                                    <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label className="text-right">Track Cartons?</Label>
-                                        <div className="col-span-3 flex items-center gap-2">
-                                            <input
-                                                type="checkbox"
-                                                className="w-4 h-4 rounded border-gray-300"
-                                                checked={editForm.trackCartons}
-                                                onChange={(e) => setEditForm({ ...editForm, trackCartons: e.target.checked })}
-                                            />
-                                            <span className="text-sm text-muted-foreground">Yes, track by cartons</span>
+                                {/* Cost entry — smart: per-carton when tracking cartons, else per-piece */}
+                                {editForm.trackCartons && editForm.unit !== 'kg' ? (
+                                    <>
+                                        <div className="grid grid-cols-4 items-center gap-4">
+                                            <Label htmlFor="edit-costPerCarton" className="text-right">Cost / Ctn ($)</Label>
+                                            <div className="col-span-3 space-y-0.5">
+                                                <Input
+                                                    id="edit-costPerCarton"
+                                                    type="number"
+                                                    step="0.01"
+                                                    placeholder="e.g. 24"
+                                                    value={editForm.costPerCarton || ""}
+                                                    onChange={(e) => {
+                                                        const cpc = parseFloat(e.target.value) || 0;
+                                                        const cpp = editForm.piecesPerCarton > 0 ? cpc / editForm.piecesPerCarton : 0;
+                                                        setEditForm({ ...editForm, costPerCarton: cpc, costPrice: parseFloat(cpp.toFixed(4)) });
+                                                    }}
+                                                />
+                                                {editForm.piecesPerCarton > 0 && editForm.costPerCarton > 0 && (
+                                                    <p className="text-[10px] text-primary font-black">
+                                                        Cost/Pcs: ${(editForm.costPerCarton / editForm.piecesPerCarton).toFixed(4)}
+                                                    </p>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
+                                        <div className="grid grid-cols-4 items-center gap-4">
+                                            <Label className="text-right text-xs text-muted-foreground uppercase font-bold">Total Val</Label>
+                                            <div className="col-span-3 text-sm font-black text-primary">
+                                                ${(editForm.cartons * editForm.costPerCarton).toFixed(2)}
+                                                <span className="text-[10px] font-normal text-muted-foreground ml-1">
+                                                    ({editForm.cartons} ctns × ${editForm.costPerCarton}/ctn)
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="grid grid-cols-4 items-center gap-4">
+                                            <Label htmlFor="edit-costPrice" className="text-right">Unit Cost ($)</Label>
+                                            <Input
+                                                id="edit-costPrice"
+                                                name="costPrice"
+                                                type="number"
+                                                step="0.01"
+                                                className="col-span-3"
+                                                required
+                                                value={editForm.costPrice || ""}
+                                                onChange={(e) => setEditForm({ ...editForm, costPrice: parseFloat(e.target.value) || 0 })}
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-4 items-center gap-4">
+                                            <Label className="text-right text-xs text-muted-foreground uppercase font-bold">Total Val</Label>
+                                            <div className="col-span-3 text-sm font-black text-primary">
+                                                {(() => {
+                                                    const totalStock = editForm.trackBags && editForm.unit !== 'kg'
+                                                        ? (editForm.bags * editForm.piecesPerBag) + editForm.loosePieces
+                                                        : editForm.stock;
+                                                    return `$${(totalStock * editForm.costPrice).toFixed(2)}`;
+                                                })()}
+                                            </div>
+                                        </div>
+                                    </>
                                 )}
+
                                     {editForm.unit !== 'kg' && (
                                         <>
                                             <div className="grid grid-cols-4 items-center gap-4">
