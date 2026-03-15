@@ -27,7 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { expensesApi } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
-import { exportToExcel } from "@/lib/export-utils";
+import { exportToExcel, exportToPDF } from "@/lib/export-utils";
 
 export default function ExpensesPage() {
   const { data: session } = useSession();
@@ -60,7 +60,7 @@ export default function ExpensesPage() {
     }
   };
 
-  const handleExport = () => {
+  const handleExportExcel = () => {
     const exportData = filteredExpenses.map(e => ({
       Description: e.description,
       Category: e.category,
@@ -69,6 +69,21 @@ export default function ExpensesPage() {
       User: e.user?.name || "System"
     }));
     exportToExcel(exportData, `Expenses_Report_${new Date().toISOString().split('T')[0]}`);
+  };
+
+  const handleExportPDF = () => {
+    const exportData = filteredExpenses.map(e => ({
+      Description: e.description,
+      Category: e.category,
+      Amount: e.amount,
+      Date: new Date(e.date).toLocaleDateString(),
+      User: e.user?.name || "System"
+    }));
+    exportToPDF(
+      exportData, 
+      `Expenses_Report_${new Date().toISOString().split('T')[0]}`,
+      "Business Expenses Report"
+    );
   };
 
   const filteredExpenses = expenses.filter(e =>
@@ -144,8 +159,11 @@ export default function ExpensesPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExport}>
-            <Download className="mr-2 h-4 w-4" /> Export
+          <Button variant="outline" size="sm" onClick={handleExportExcel} className="h-9 px-4 rounded-lg border-primary/20 hover:bg-primary/5">
+            <Download className="mr-2 h-4 w-4 text-primary" /> Export Excel
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleExportPDF} className="h-9 px-4 rounded-lg border-primary/20 hover:bg-primary/5">
+            <Download className="mr-2 h-4 w-4 text-primary" /> Export PDF
           </Button>
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>

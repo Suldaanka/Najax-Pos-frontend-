@@ -34,7 +34,7 @@ import { toast } from "sonner";
 import { Download, } from "lucide-react";
 import { customersApi } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
-import { exportToExcel } from "@/lib/export-utils";
+import { exportToExcel, exportToPDF } from "@/lib/export-utils";
 
 export default function CustomersPage() {
     const { data: session } = useSession();
@@ -65,7 +65,7 @@ export default function CustomersPage() {
         }
     };
 
-    const handleExport = () => {
+    const handleExportExcel = () => {
         const exportData = filteredCustomers.map(c => ({
             Name: c.name,
             Phone: c.phone || "N/A",
@@ -73,6 +73,19 @@ export default function CustomersPage() {
             Status: "Active"
         }));
         exportToExcel(exportData, `Customers_List_${new Date().toISOString().split('T')[0]}`);
+    };
+
+    const handleExportPDF = () => {
+        const exportData = filteredCustomers.map(c => ({
+            Name: c.name,
+            Phone: c.phone || "N/A",
+            Points: c.loyaltyPoints || 0
+        }));
+        exportToPDF(
+            exportData, 
+            `Customers_List_${new Date().toISOString().split('T')[0]}`,
+            "Customer Database Report"
+        );
     };
 
     const filteredCustomers = customers.filter(c =>
@@ -140,8 +153,11 @@ export default function CustomersPage() {
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={handleExport}>
-                        <Download className="mr-2 h-4 w-4" /> Export
+                    <Button variant="outline" size="sm" onClick={handleExportExcel} className="h-9 px-4 rounded-lg border-primary/20 hover:bg-primary/5">
+                        <Download className="mr-2 h-4 w-4 text-primary" /> Export Excel
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handleExportPDF} className="h-9 px-4 rounded-lg border-primary/20 hover:bg-primary/5">
+                        <Download className="mr-2 h-4 w-4 text-primary" /> Export PDF
                     </Button>
                     <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                         <DialogTrigger asChild>

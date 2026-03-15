@@ -35,7 +35,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { staffApi, invitationsApi } from "@/lib/api";
 import { Download } from "lucide-react";
-import { exportToExcel } from "@/lib/export-utils";
+import { exportToExcel, exportToPDF } from "@/lib/export-utils";
 import { useSession } from "@/lib/auth-client";
 
 export default function StaffPage() {
@@ -74,7 +74,7 @@ export default function StaffPage() {
         }
     };
 
-    const handleExport = () => {
+    const handleExportExcel = () => {
         const exportData = filteredStaff.map(s => ({
             Name: s.user?.name || "N/A",
             Email: s.user?.email || "N/A",
@@ -83,6 +83,20 @@ export default function StaffPage() {
             Joined: new Date(s.createdAt).toLocaleDateString()
         }));
         exportToExcel(exportData, `Staff_List_${new Date().toISOString().split('T')[0]}`);
+    };
+
+    const handleExportPDF = () => {
+        const exportData = filteredStaff.map(s => ({
+            Name: s.user?.name || "N/A",
+            Email: s.user?.email || "N/A",
+            Role: s.role,
+            Status: "Active"
+        }));
+        exportToPDF(
+            exportData, 
+            `Staff_List_${new Date().toISOString().split('T')[0]}`,
+            "Staff Management Directory"
+        );
     };
 
     const filteredStaff = staff.filter(s =>
@@ -158,8 +172,11 @@ export default function StaffPage() {
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={handleExport}>
-                        <Download className="mr-2 h-4 w-4" /> Export
+                    <Button variant="outline" size="sm" onClick={handleExportExcel} className="h-9 px-4 rounded-lg border-primary/20 hover:bg-primary/5">
+                        <Download className="mr-2 h-4 w-4 text-primary" /> Export Excel
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handleExportPDF} className="h-9 px-4 rounded-lg border-primary/20 hover:bg-primary/5">
+                        <Download className="mr-2 h-4 w-4 text-primary" /> Export PDF
                     </Button>
                     <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
                         <DialogTrigger asChild>

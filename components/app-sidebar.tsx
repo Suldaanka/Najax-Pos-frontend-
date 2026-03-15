@@ -82,6 +82,11 @@ const data = {
       icon: LineChart,
     },
     {
+      title: "Inventory Logs",
+      url: "/dashboard/inventory-logs",
+      icon: BookOpen,
+    },
+    {
       title: "Expenses",
       url: "/dashboard/expenses",
       icon: Receipt,
