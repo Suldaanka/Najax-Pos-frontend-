@@ -56,6 +56,10 @@ export default function ProductsPage() {
     const [adjustingProduct, setAdjustingProduct] = useState<any>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [isCameraOpen, setIsCameraOpen] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState<any>(null);
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [stockLogs, setStockLogs] = useState<any[]>([]);
+    const [loadingLogs, setLoadingLogs] = useState(false);
 
     const [addForm, setAddForm] = useState({
         name: "",
@@ -77,6 +81,8 @@ export default function ProductsPage() {
         trackBags: false,
         bags: 0,
         piecesPerBag: 0,
+        wholesalePrice: 0,
+        minWholesaleQty: 0,
     });
 
     const [editForm, setEditForm] = useState({
@@ -99,6 +105,8 @@ export default function ProductsPage() {
         trackBags: false,
         bags: 0,
         piecesPerBag: 0,
+        wholesalePrice: 0,
+        minWholesaleQty: 0,
     });
 
     const businessId = (session?.user as any)?.activeBusinessId;
@@ -206,6 +214,8 @@ export default function ProductsPage() {
             unit: addForm.unit,
             piecesPerCarton: trackCartons ? addForm.piecesPerCarton : null,
             piecesPerBag: trackBags ? addForm.piecesPerBag : (isKg && addForm.useBulkCalc) ? addForm.kgPerBag : null,
+            wholesalePrice: addForm.wholesalePrice || null,
+            minWholesaleQty: addForm.minWholesaleQty || null,
         };
 
         try {
@@ -232,6 +242,8 @@ export default function ProductsPage() {
                 trackBags: false,
                 bags: 0,
                 piecesPerBag: 0,
+                wholesalePrice: 0,
+                minWholesaleQty: 0,
             }); // reset
             toast.success("Product added successfully");
         } catch (error: any) {
@@ -265,6 +277,8 @@ export default function ProductsPage() {
             piecesPerBag: trackBags ? editForm.piecesPerBag : 
                          (isKg && editForm.useBulkCalc) ? editForm.kgPerBag : 
                          (isKg && editingProduct?.piecesPerBag) ? editingProduct.piecesPerBag : null,
+            wholesalePrice: editForm.wholesalePrice || null,
+            minWholesaleQty: editForm.minWholesaleQty || null,
         };
 
         try {
@@ -321,6 +335,18 @@ export default function ProductsPage() {
             toast.success("Product deleted successfully");
         } catch (error: any) {
             toast.error("Failed to delete product: " + error.message);
+        }
+    };
+
+    const fetchStockLogs = async (productId: string) => {
+        setLoadingLogs(true);
+        try {
+            const data = await inventoryApi.getStockLogs(productId);
+            setStockLogs(data);
+        } catch (error: any) {
+            console.error("Failed to fetch logs:", error);
+        } finally {
+            setLoadingLogs(false);
         }
     };
 
@@ -719,6 +745,38 @@ export default function ProductsPage() {
                                         )}
                                         </div>
                                     </div>
+                                    <div className="grid grid-cols-4 items-center gap-4 border-t pt-4">
+                                        <div className="col-span-1">
+                                            <Label className="text-right flex flex-col">
+                                                <span>Wholesale</span>
+                                                <span className="text-[10px] text-muted-foreground">(Optional)</span>
+                                            </Label>
+                                        </div>
+                                        <div className="col-span-3 grid grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <Label htmlFor="wholesalePrice" className="text-[10px] uppercase font-bold">Wholesale Price</Label>
+                                                <Input 
+                                                    id="wholesalePrice" 
+                                                    type="number" 
+                                                    step="0.01" 
+                                                    placeholder="0.00"
+                                                    value={addForm.wholesalePrice || ""}
+                                                    onChange={(e) => setAddForm({ ...addForm, wholesalePrice: parseFloat(e.target.value) || 0 })}
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label htmlFor="minWholesaleQty" className="text-[10px] uppercase font-bold">Min Qty</Label>
+                                                <Input 
+                                                    id="minWholesaleQty" 
+                                                    type="number" 
+                                                    step="1" 
+                                                    placeholder="e.g. 10"
+                                                    value={addForm.minWholesaleQty || ""}
+                                                    onChange={(e) => setAddForm({ ...addForm, minWholesaleQty: parseFloat(e.target.value) || 0 })}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <DialogFooter className="p-6 pt-2">
@@ -770,7 +828,18 @@ export default function ProductsPage() {
                             </TableRow>
                         ) : filteredProducts.map((product) => (
                             <TableRow key={product.id}>
-                                <TableCell className="font-medium text-sm">{product.name}</TableCell>
+                                <TableCell className="font-medium text-sm">
+                                    <button 
+                                        onClick={() => {
+                                            setSelectedProduct(product);
+                                            fetchStockLogs(product.id);
+                                            setIsDetailOpen(true);
+                                        }}
+                                        className="hover:underline text-left font-bold text-primary transition-all active:scale-95"
+                                    >
+                                        {product.name}
+                                    </button>
+                                </TableCell>
                                 <TableCell className="text-sm">{product.category?.name || "Uncategorized"}</TableCell>
                                 <TableCell className="text-sm">${product.sellingPrice}</TableCell>
                                 <TableCell className="text-xs uppercase font-bold text-muted-foreground">{product.unit || "pcs"}</TableCell>
@@ -1224,6 +1293,38 @@ export default function ProductsPage() {
                                         )}
                                     </div>
                                     </div>
+                                    <div className="grid grid-cols-4 items-center gap-4 border-t pt-4">
+                                        <div className="col-span-1">
+                                            <Label className="text-right flex flex-col">
+                                                <span>Wholesale</span>
+                                                <span className="text-[10px] text-muted-foreground">(Optional)</span>
+                                            </Label>
+                                        </div>
+                                        <div className="col-span-3 grid grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <Label htmlFor="edit-wholesalePrice" className="text-[10px] uppercase font-bold">Wholesale Price</Label>
+                                                <Input 
+                                                    id="edit-wholesalePrice" 
+                                                    type="number" 
+                                                    step="0.01" 
+                                                    placeholder="0.00"
+                                                    value={editForm.wholesalePrice || ""}
+                                                    onChange={(e) => setEditForm({ ...editForm, wholesalePrice: parseFloat(e.target.value) || 0 })}
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label htmlFor="edit-minWholesaleQty" className="text-[10px] uppercase font-bold">Min Qty</Label>
+                                                <Input 
+                                                    id="edit-minWholesaleQty" 
+                                                    type="number" 
+                                                    step="1" 
+                                                    placeholder="e.g. 10"
+                                                    value={editForm.minWholesaleQty || ""}
+                                                    onChange={(e) => setEditForm({ ...editForm, minWholesaleQty: parseFloat(e.target.value) || 0 })}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <DialogFooter className="p-6 pt-2">
@@ -1266,6 +1367,95 @@ export default function ProductsPage() {
                                 <Button type="submit">Complete Adjustment</Button>
                             </DialogFooter>
                         </form>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+                <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden">
+                    {selectedProduct && (
+                        <div className="flex flex-col max-h-[90vh]">
+                            <DialogHeader className="p-6 pb-2">
+                                <DialogTitle className="flex items-center justify-between">
+                                    <span>{selectedProduct.name}</span>
+                                    <Badge variant="outline" className="text-[10px] uppercase font-bold px-2 py-0 border-primary/30 text-primary">{selectedProduct.unit || 'pcs'}</Badge>
+                                </DialogTitle>
+                                <DialogDescription>Product details and stock movement history.</DialogDescription>
+                            </DialogHeader>
+                            
+                            <div className="flex-1 overflow-y-auto p-6 pt-2">
+                                <div className="grid grid-cols-2 gap-6 mb-6">
+                                    <div className="space-y-1 bg-muted/30 p-3 rounded-lg border border-primary/5">
+                                        <p className="text-[10px] uppercase font-black text-muted-foreground/60 tracking-wider">Current Stock</p>
+                                        <p className="text-2xl font-black text-primary">{selectedProduct.stockQuantity} <span className="text-sm font-normal text-muted-foreground">{selectedProduct.unit || 'pcs'}</span></p>
+                                    </div>
+                                    <div className="space-y-1 bg-muted/30 p-3 rounded-lg border border-primary/5">
+                                        <p className="text-[10px] uppercase font-black text-muted-foreground/60 tracking-wider">Selling Price</p>
+                                        <p className="text-2xl font-black text-primary">${selectedProduct.sellingPrice}</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between border-b pb-1">
+                                        <h3 className="text-xs font-black uppercase text-muted-foreground tracking-widest flex items-center gap-2">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                                            Stock History Log
+                                        </h3>
+                                        <span className="text-[10px] text-muted-foreground italic">Last 50 movements</span>
+                                    </div>
+
+                                    <div className="rounded-xl border bg-card overflow-hidden">
+                                        <Table>
+                                            <TableHeader className="bg-muted/50">
+                                                <TableRow className="hover:bg-transparent">
+                                                    <TableHead className="h-8 text-[10px] font-black uppercase">Date</TableHead>
+                                                    <TableHead className="h-8 text-[10px] font-black uppercase">Type</TableHead>
+                                                    <TableHead className="h-8 text-[10px] font-black uppercase">Qty</TableHead>
+                                                    <TableHead className="h-8 text-[10px] font-black uppercase">Balance</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {loadingLogs ? (
+                                                    <TableRow><TableCell colSpan={4} className="text-center py-8 text-xs text-muted-foreground">Loading history...</TableCell></TableRow>
+                                                ) : stockLogs.length === 0 ? (
+                                                    <TableRow><TableCell colSpan={4} className="text-center py-8 text-xs text-muted-foreground italic">No stock movements recorded yet.</TableCell></TableRow>
+                                                ) : stockLogs.map((log) => (
+                                                    <TableRow key={log.id} className="group transition-colors hover:bg-muted/30">
+                                                        <TableCell className="py-2 text-[10px] font-medium text-muted-foreground">
+                                                            {new Date(log.createdAt).toLocaleDateString()}
+                                                            <br />
+                                                            <span className="opacity-40">{new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                        </TableCell>
+                                                        <TableCell className="py-2">
+                                                            <Badge 
+                                                                variant="outline" 
+                                                                className={`text-[9px] px-1 py-0 h-4 font-black border-none uppercase ${
+                                                                    log.type === 'SALE' ? 'text-blue-500 bg-blue-500/5' : 
+                                                                    log.type === 'PURCHASE' ? 'text-green-500 bg-green-500/5' : 
+                                                                    'text-orange-500 bg-orange-500/5'
+                                                                }`}
+                                                            >
+                                                                {log.type}
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell className={`py-2 text-xs font-black ${log.type === 'SALE' ? 'text-red-500' : 'text-green-600'}`}>
+                                                            {log.type === 'SALE' || (log.type === 'ADJUSTMENT' && log.quantity < 0) ? '-' : '+'}{Math.abs(log.quantity)}
+                                                        </TableCell>
+                                                        <TableCell className="py-2 text-[11px] font-bold text-primary/80">
+                                                            {log.newStock}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <DialogFooter className="p-4 border-t bg-muted/20">
+                                <Button variant="secondary" size="sm" className="w-full text-xs font-bold" onClick={() => setIsDetailOpen(false)}>Close Activity Log</Button>
+                            </DialogFooter>
+                        </div>
                     )}
                 </DialogContent>
             </Dialog>

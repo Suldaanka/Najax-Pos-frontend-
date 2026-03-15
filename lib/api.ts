@@ -49,6 +49,7 @@ export const productsApi = {
 
 export const staffApi = {
     getAll: (businessId: string) => apiFetch(`/staff?businessId=${businessId}`),
+    getPerformance: () => apiFetch('/staff/performance'),
     remove: (id: string) => apiFetch(`/staff/${id}`, { method: 'DELETE' }),
 };
 
@@ -120,4 +121,7 @@ export const inventoryApi = {
     // Exchange Rates
     getExchangeRates: () => apiFetch('/inventory/exchange-rates'),
     updateExchangeRate: (data: any) => apiFetch('/inventory/exchange-rates', { method: 'POST', body: JSON.stringify(data) }),
+
+    // Stock Logs
+    getStockLogs: (productId?: string) => apiFetch(productId ? `/inventory/stock-logs/${productId}` : '/inventory/stock-logs'),
 };

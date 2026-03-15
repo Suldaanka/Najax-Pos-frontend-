@@ -80,17 +80,31 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setCart(prev => {
             const existing = prev.find(item => item.id === product.id);
             if (existing) {
+                const newQty = existing.quantity + 1;
+                const price = (product.wholesalePrice && newQty >= (product.minWholesaleQty || 0)) 
+                    ? parseFloat(product.wholesalePrice) 
+                    : parseFloat(product.sellingPrice);
+                
                 return prev.map(item =>
-                    item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+                    item.id === product.id ? { ...item, quantity: newQty, price } : item
                 );
             }
+            
+            const initialPrice = (product.wholesalePrice && 1 >= (product.minWholesaleQty || 0))
+                ? parseFloat(product.wholesalePrice)
+                : parseFloat(product.sellingPrice);
+
             return [...prev, { 
                 id: product.id, 
                 name: product.name, 
-                price: parseFloat(product.sellingPrice), 
+                price: initialPrice, 
                 quantity: 1, 
-                unit: product.unit || "pcs" 
-            }];
+                unit: product.unit || "pcs",
+                // Store product info for future price re-calculation
+                wholesalePrice: product.wholesalePrice,
+                minWholesaleQty: product.minWholesaleQty,
+                sellingPrice: product.sellingPrice
+            } as any];
         });
         toast.info(`Added ${product.name} to cart`);
     }, []);
@@ -98,7 +112,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const updateQuantity = useCallback((id: string, delta: number) => {
         setCart(prev => prev.map(item => {
             if (item.id === id) {
-                return { ...item, quantity: item.quantity + delta };
+                const newQty = item.quantity + delta;
+                if (newQty <= 0) return item; // filter handle later
+
+                // Re-calculate price based on new quantity
+                const cartItem = item as any;
+                let price = cartItem.price;
+                if (cartItem.wholesalePrice) {
+                    price = newQty >= (cartItem.minWholesaleQty || 0)
+                        ? parseFloat(cartItem.wholesalePrice)
+                        : parseFloat(cartItem.sellingPrice);
+                }
+
+                return { ...item, quantity: newQty, price };
             }
             return item;
         }).filter(item => item.quantity > 0));

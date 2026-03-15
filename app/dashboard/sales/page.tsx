@@ -103,7 +103,7 @@ export default function SalesPage() {
                     </style>
                 </head>
                 <body>
-                    <h1>NAJAX POS</h1>
+                    <h1>${(session?.user as any)?.activeBusinessName || "NAJAX POS"}</h1>
                     <p class="center">Receipt #${sale.id.slice(-6).toUpperCase()}</p>
                     <p class="center">${new Date(sale.createdAt).toLocaleString()}</p>
                     <div class="separator"></div>

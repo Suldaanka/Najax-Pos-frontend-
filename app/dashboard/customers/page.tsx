@@ -69,6 +69,7 @@ export default function CustomersPage() {
         const exportData = filteredCustomers.map(c => ({
             Name: c.name,
             Phone: c.phone || "N/A",
+            LoyaltyPoints: c.loyaltyPoints || 0,
             Status: "Active"
         }));
         exportToExcel(exportData, `Customers_List_${new Date().toISOString().split('T')[0]}`);
@@ -191,12 +192,12 @@ export default function CustomersPage() {
             <div className="border rounded-lg overflow-hidden">
                 <Table className="w-full">
                     <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-[250px]">Name</TableHead>
-                            <TableHead className="w-[200px]">Phone</TableHead>
-                            <TableHead className="w-[150px] text-right">Total Sales</TableHead>
-                            <TableHead className="w-[120px]">Status</TableHead>
-                            <TableHead className="w-[80px] text-right">Actions</TableHead>
+                        <TableRow className="hover:bg-transparent">
+                            <TableHead className="text-[10px] font-black uppercase tracking-widest">Customer</TableHead>
+                            <TableHead className="text-[10px] font-black uppercase tracking-widest">Contact</TableHead>
+                            <TableHead className="text-[10px] font-black uppercase tracking-widest">Loyalty Points</TableHead>
+                            <TableHead className="text-[10px] font-black uppercase tracking-widest">Status</TableHead>
+                            <TableHead className="text-right text-[10px] font-black uppercase tracking-widest">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
 
@@ -215,24 +216,37 @@ export default function CustomersPage() {
                             </TableRow>
                         ) : (
                             filteredCustomers.map((customer) => (
-                                <TableRow key={customer.id} className="hover:bg-muted/40 transition-colors">
-                                    <TableCell className="font-medium">
-                                        <div className="flex items-center gap-2">
-                                            <User className="h-4 w-4 text-muted-foreground shrink-0" />
-                                            <span className="truncate">{customer.name}</span>
+                                <TableRow key={customer.id} className="group transition-colors hover:bg-muted/30">
+                                    <TableCell className="py-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-9 w-9 rounded-full bg-primary/5 flex items-center justify-center border border-primary/10">
+                                                <User className="h-4 w-4 text-primary" />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-sm tracking-tight">{customer.name}</span>
+                                                <span className="text-[10px] text-muted-foreground uppercase font-black opacity-40">Retail Customer</span>
+                                            </div>
                                         </div>
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-2">
-                                            <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
-                                            <span>{customer.phone || "N/A"}</span>
+                                            <Badge variant="outline" className="text-[10px] font-bold border-muted-foreground/20 text-muted-foreground bg-muted/20">
+                                                <Phone className="h-2.5 w-2.5 mr-1" />
+                                                {customer.phone || "No Phone"}
+                                            </Badge>
                                         </div>
                                     </TableCell>
-                                    <TableCell className="text-right font-medium">
-                                        $0.00
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            <div className="bg-amber-500/10 text-amber-600 px-2 py-1 rounded-lg border border-amber-500/20 flex items-center gap-1.5">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                                <span className="text-sm font-black">{customer.loyaltyPoints || 0}</span>
+                                                <span className="text-[9px] font-black uppercase tracking-tighter opacity-80">Pts</span>
+                                            </div>
+                                        </div>
                                     </TableCell>
                                     <TableCell>
-                                        <Badge variant="default">
+                                        <Badge variant="default" className="bg-emerald-500 text-white border-none text-[9px] font-black uppercase px-2 py-0">
                                             Active
                                         </Badge>
                                     </TableCell>
