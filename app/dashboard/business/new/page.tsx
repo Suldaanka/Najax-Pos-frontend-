@@ -30,22 +30,12 @@ export default function CreateBusinessPage() {
         phone: "",
     });
 
-    // Auto-detect if user was invited and already has a business membership
+    // Auto-detect if user was invited
     useEffect(() => {
         let isMounted = true;
         const checkContext = async () => {
             try {
-                // 1. Check for existing business memberships
-                const businesses = await businessApi.getAllMyBusinesses();
-                if (isMounted && businesses && businesses.length > 0) {
-                    console.log("Found existing memberships, auto-redirecting...");
-                    await businessApi.switchBusiness(businesses[0].id);
-                    toast.success(`Welcome back! Switching to ${businesses[0].name}`);
-                    window.location.href = "/dashboard";
-                    return;
-                }
-
-                // 2. Check for pending invitations
+                // 1. Check for pending invitations
                 const invitesResponse = await invitationsApi.getMyInvitations();
                 if (isMounted && invitesResponse.invitations) {
                     setMyInvitations(invitesResponse.invitations);
@@ -54,6 +44,9 @@ export default function CreateBusinessPage() {
                     }
                 }
 
+                // Note: We removed the auto-redirect for existing memberships 
+                // to allow users to create multiple businesses if they wish.
+
             } catch (error) {
                 console.error("Failed to check context:", error);
             }
@@ -61,7 +54,7 @@ export default function CreateBusinessPage() {
 
         checkContext();
         return () => { isMounted = false; };
-    }, [router]);
+    }, []);
 
     const handleAcceptInvitation = async (id: string, businessName: string) => {
         setInvitationLoading(id);
