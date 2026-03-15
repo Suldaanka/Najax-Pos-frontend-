@@ -149,7 +149,10 @@ export default function StaffPage() {
         <div className="flex flex-col gap-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight">Staff Management</h2>
+                    <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+                        Staff Management
+                        <Badge variant="outline" className="text-[10px] font-black bg-primary/10 text-primary border-primary/20 animate-pulse">v2.0 ENTERPRISE</Badge>
+                    </h2>
                     <p className="text-muted-foreground">
                         Manage your team members and their access levels.
                     </p>

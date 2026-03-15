@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { productsApi, categoriesApi } from "@/lib/api";
+import { productsApi, categoriesApi, inventoryApi } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import BarcodeScanner from "@/components/barcode-scanner";
 import {
@@ -356,7 +356,10 @@ export default function ProductsPage() {
         <div className="flex flex-col gap-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight">Products</h2>
+                    <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+                        Products
+                        <Badge variant="outline" className="text-[10px] font-black bg-primary/10 text-primary border-primary/20 animate-pulse">v2.0 ENTERPRISE</Badge>
+                    </h2>
                     <p className="text-muted-foreground">
                         Manage your inventory and product listings.
                     </p>
