@@ -47,6 +47,11 @@ export default function StaffPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [performance, setPerformance] = useState<any[]>([]);
     const [view, setView] = useState<"list" | "performance">("list");
+    
+    // Role management states
+    const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
+    const [selectedMember, setSelectedMember] = useState<any>(null);
+    const [processingRole, setProcessingRole] = useState(false);
 
     const businessId = (session?.user as any)?.activeBusinessId;
 
@@ -156,6 +161,21 @@ export default function StaffPage() {
             toast.success("Staff member removed");
         } catch (error: any) {
             toast.error("Failed to remove staff: " + error.message);
+        }
+    };
+
+    const handleUpdateRole = async (userId: string, role: string) => {
+        if (!userId || !role) return;
+        setProcessingRole(true);
+        try {
+            await staffApi.updateRole(userId, role);
+            toast.success("User role updated successfully");
+            setIsRoleDialogOpen(false);
+            fetchData();
+        } catch (error: any) {
+            toast.error("Failed to update role: " + error.message);
+        } finally {
+            setProcessingRole(false);
         }
     };
 
@@ -315,7 +335,13 @@ export default function StaffPage() {
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end" className="w-[180px]">
                                                         <DropdownMenuLabel className="text-[10px] uppercase font-black tracking-widest opacity-50 px-2 py-1.5">Staff Options</DropdownMenuLabel>
-                                                        <DropdownMenuItem className="text-xs font-bold">
+                                                        <DropdownMenuItem 
+                                                            className="text-xs font-bold"
+                                                            onClick={() => {
+                                                                setSelectedMember(member);
+                                                                setIsRoleDialogOpen(true);
+                                                            }}
+                                                        >
                                                             <Pencil className="mr-2 h-3.5 w-3.5" /> Manage Permissions
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem
@@ -330,6 +356,61 @@ export default function StaffPage() {
                                             </TableCell>
                                         </TableRow>
                                     ))}
+
+                                    {/* Role Management Dialog */}
+                                    <Dialog open={isRoleDialogOpen} onOpenChange={setIsRoleDialogOpen}>
+                                        <DialogContent className="sm:max-w-[400px]">
+                                            <DialogHeader>
+                                                <DialogTitle className="flex items-center gap-2">
+                                                    <ShieldCheck className="h-5 w-5 text-primary" />
+                                                    Manage Permissions
+                                                </DialogTitle>
+                                                <DialogDescription>
+                                                    Change the role for {selectedMember?.user?.name || "this user"}.
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <div className="py-6 space-y-4">
+                                                <div className="space-y-2">
+                                                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-50">Select Membership Role</Label>
+                                                    <Select 
+                                                        defaultValue={selectedMember?.role} 
+                                                        onValueChange={(val) => {
+                                                            if (selectedMember) {
+                                                                setSelectedMember({...selectedMember, role: val});
+                                                            }
+                                                        }}
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select a role" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="OWNER">
+                                                                <div className="flex flex-col text-left">
+                                                                    <span className="font-bold">Owner</span>
+                                                                    <span className="text-[10px] text-muted-foreground">Full administrative access to settings and billing.</span>
+                                                                </div>
+                                                            </SelectItem>
+                                                            <SelectItem value="STAFF">
+                                                                <div className="flex flex-col text-left">
+                                                                    <span className="font-bold">Staff</span>
+                                                                    <span className="text-[10px] text-muted-foreground">Limited access to daily operations like sales and products.</span>
+                                                                </div>
+                                                            </SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            </div>
+                                            <DialogFooter>
+                                                <Button variant="outline" onClick={() => setIsRoleDialogOpen(false)}>Cancel</Button>
+                                                <Button 
+                                                    onClick={() => handleUpdateRole(selectedMember?.user?.id, selectedMember?.role)}
+                                                    disabled={processingRole}
+                                                >
+                                                    {processingRole ? "Updating..." : "Update Permissions"}
+                                                </Button>
+                                            </DialogFooter>
+                                        </DialogContent>
+                                    </Dialog>
 
                                     {/* Show Pending Invitations */}
                                     {filteredInvitations.map((invite) => (
