@@ -25,11 +25,14 @@ export default function InventoryLogsPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [filter, setFilter] = useState("ALL");
 
+    const user = session?.user as any;
+    const businessId = user?.activeBusinessId;
+
     useEffect(() => {
-        if (session?.user?.activeBusinessId) {
+        if (businessId) {
             fetchLogs();
         }
-    }, [session?.user?.activeBusinessId]);
+    }, [businessId]);
 
     const fetchLogs = async () => {
         setLoading(true);
