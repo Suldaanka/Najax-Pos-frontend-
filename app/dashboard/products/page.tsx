@@ -112,29 +112,37 @@ export default function ProductsPage() {
 
     // Bulk calculation for Add Form
     useEffect(() => {
-        if (addForm.useBulkCalc && addForm.unit === 'kg') {
-            const totalStock = (addForm.numBags || 0) * (addForm.kgPerBag || 0);
-            const unitCost = addForm.kgPerBag > 0 ? (addForm.costPerBag || 0) / addForm.kgPerBag : 0;
+        if (addForm.useBulkCalc && (addForm.unit === 'kg' || addForm.unit === 'ltr')) {
+            const totalStock = (addForm.numBags || 0) * (addForm.piecesPerBag || 0);
+            const unitCost = addForm.piecesPerBag > 0 ? (addForm.costPerBag || 0) / addForm.piecesPerBag : 0;
+            const roundedCost = parseFloat(unitCost.toFixed(2));
+            
+            // Suggest selling price with 20% margin if price is currently 0 or near suggested
+            const suggestedPrice = parseFloat((roundedCost * 1.2).toFixed(2));
+            
             setAddForm(prev => ({
                 ...prev,
                 stock: totalStock,
-                costPrice: parseFloat(unitCost.toFixed(2))
+                costPrice: roundedCost,
+                price: prev.price === 0 ? suggestedPrice : prev.price
             }));
         }
-    }, [addForm.useBulkCalc, addForm.numBags, addForm.kgPerBag, addForm.costPerBag, addForm.unit]);
+    }, [addForm.useBulkCalc, addForm.numBags, addForm.piecesPerBag, addForm.costPerBag, addForm.unit]);
 
     // Bulk calculation for Edit Form
     useEffect(() => {
-        if (editForm.useBulkCalc && editForm.unit === 'kg') {
-            const totalStock = (editForm.numBags || 0) * (editForm.kgPerBag || 0);
-            const unitCost = editForm.kgPerBag > 0 ? (editForm.costPerBag || 0) / editForm.kgPerBag : 0;
+        if (editForm.useBulkCalc && (editForm.unit === 'kg' || editForm.unit === 'ltr')) {
+            const totalStock = (editForm.numBags || 0) * (editForm.piecesPerBag || 0);
+            const unitCost = editForm.piecesPerBag > 0 ? (editForm.costPerBag || 0) / editForm.piecesPerBag : 0;
+            const roundedCost = parseFloat(unitCost.toFixed(2));
+            
             setEditForm(prev => ({
                 ...prev,
                 stock: totalStock,
-                costPrice: parseFloat(unitCost.toFixed(2))
+                costPrice: roundedCost
             }));
         }
-    }, [editForm.useBulkCalc, editForm.numBags, editForm.kgPerBag, editForm.costPerBag, editForm.unit]);
+    }, [editForm.useBulkCalc, editForm.numBags, editForm.piecesPerBag, editForm.costPerBag, editForm.unit]);
 
     const fetchProducts = async () => {
         setLoading(true);
