@@ -49,7 +49,7 @@ export const productsApi = {
 
 export const staffApi = {
     getAll: (businessId: string) => apiFetch(`/staff?businessId=${businessId}`),
-    getPerformance: () => apiFetch('/staff/performance'),
+    getPerformance: (businessId: string) => apiFetch(`/staff/performance?businessId=${businessId}`),
     remove: (id: string) => apiFetch(`/staff/${id}`, { method: 'DELETE' }),
 };
 

@@ -62,7 +62,7 @@ export default function StaffPage() {
             const [staffData, inviteData, performanceData] = await Promise.all([
                 staffApi.getAll(businessId),
                 invitationsApi.getAll(businessId),
-                staffApi.getPerformance()
+                staffApi.getPerformance(businessId)
             ]);
             setStaff(staffData);
             setInvitations(inviteData.invitations || []);
