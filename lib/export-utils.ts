@@ -1,6 +1,6 @@
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 
 export function exportToExcel(data: any[], fileName: string) {
     const worksheet = XLSX.utils.json_to_sheet(data);
@@ -10,7 +10,7 @@ export function exportToExcel(data: any[], fileName: string) {
 }
 
 export function exportToPDF(data: any[], fileName: string, title?: string) {
-    const doc = new jsPDF() as any;
+    const doc = new jsPDF();
     
     if (title) {
         doc.setFontSize(18);
@@ -21,11 +21,11 @@ export function exportToPDF(data: any[], fileName: string, title?: string) {
     }
 
     const headers = data.length > 0 ? Object.keys(data[0]) : [];
-    const rows = data.map(item => Object.values(item));
+    const rows = data.map(item => Object.values(item) as (string | number | boolean)[]);
 
-    doc.autoTable({
+    autoTable(doc, {
         head: [headers],
-        body: rows,
+        body: rows as any,
         startY: title ? 35 : 15,
         theme: 'striped',
         headStyles: { fillColor: [79, 70, 229], textColor: 255 }, // Indigo-600 logic
