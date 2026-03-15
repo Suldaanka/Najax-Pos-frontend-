@@ -305,6 +305,8 @@ export default function ProductsPage() {
                 trackBags: false,
                 bags: 0,
                 piecesPerBag: 0,
+                wholesalePrice: 0,
+                minWholesaleQty: 0,
             }); // reset
             toast.success("Product updated successfully");
         } catch (error: any) {
@@ -913,6 +915,8 @@ export default function ProductsPage() {
                                                     numBags: ((product.unit === 'kg' || product.unit === 'ltr') && product.piecesPerBag) ? Math.floor(product.stockQuantity / product.piecesPerBag) : 0,
                                                     kgPerBag: (product.unit === 'kg' && product.piecesPerBag) ? product.piecesPerBag : 50, // This will be replaced by piecesPerBag for ltr
                                                     costPerBag: 0,
+                                                    wholesalePrice: product.wholesalePrice || 0,
+                                                    minWholesaleQty: product.minWholesaleQty || 0,
                                                 });
                                                 setIsEditOpen(true);
                                             }}>
