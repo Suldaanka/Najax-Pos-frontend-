@@ -7,7 +7,7 @@
 
 [[redirects]]
   from = "/api/*"
-  to = "http://localhost:5000/api/:splat"
+  to = "https://najax-pos-production.up.railway.app/api/:splat"
   status = 200
   force = true
 
