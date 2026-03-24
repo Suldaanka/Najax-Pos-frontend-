@@ -39,17 +39,25 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         stateRef.current = "idle";
 
         const config = {
-            fps,
-            qrbox,
+            fps: 20, // Increased for better accuracy
+            qrbox: { width: 280, height: 200 }, // Better proportion for linear barcodes
+            aspectRatio: 1.0,
             formatsToSupport: [
                 Html5QrcodeSupportedFormats.EAN_13,
                 Html5QrcodeSupportedFormats.EAN_8,
                 Html5QrcodeSupportedFormats.CODE_128,
                 Html5QrcodeSupportedFormats.CODE_39,
+                Html5QrcodeSupportedFormats.CODE_93,
+                Html5QrcodeSupportedFormats.ITF,
                 Html5QrcodeSupportedFormats.UPC_A,
                 Html5QrcodeSupportedFormats.UPC_E,
                 Html5QrcodeSupportedFormats.QR_CODE,
+                Html5QrcodeSupportedFormats.DATA_MATRIX,
             ],
+            // Use zxing-js for all formats to be more robust
+            experimentalFeatures: {
+                useBarCodeDetectorIfSupported: true
+            }
         };
 
         const safeStop = async (scanner: Html5Qrcode) => {
@@ -115,19 +123,34 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     }, []); // Run only once per mount/unmount
 
     return (
-        <div className="relative w-full aspect-square max-w-sm mx-auto overflow-hidden rounded-2xl border-4 border-primary/20 bg-black shadow-2xl">
-            <div id={elementId.current} className="w-full h-full object-cover" />
+        <div className="relative w-full aspect-square max-w-sm mx-auto overflow-hidden rounded-2xl border-4 border-primary/20 bg-black shadow-2xl group">
+            <div id={elementId.current} className="w-full h-full object-cover grayscale contrast-125" />
 
             {/* Scan Overlay UI */}
-            <div className="absolute inset-0 border-[40px] border-black/40 pointer-events-none">
-                <div className="w-full h-full border-2 border-primary animate-pulse rounded-sm" />
+            <div className="absolute inset-0 border-[30px] border-black/60 pointer-events-none">
+                <div className="w-full h-full border-2 border-primary/40 rounded-sm relative">
+                    {/* Corner Brackets for professional look */}
+                    <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-primary rounded-tl-md" />
+                    <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-primary rounded-tr-md" />
+                    <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-primary rounded-bl-md" />
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-primary rounded-br-md" />
+                    
+                    {/* Pulsing Scan Line */}
+                    <div className="w-full h-0.5 bg-primary/60 absolute top-1/2 -translate-y-1/2 shadow-[0_0_15px_rgba(var(--primary),0.8)] animate-bounce" />
+                </div>
             </div>
 
-            <div className="absolute bottom-6 left-0 right-0 text-center z-10">
-                <p className="px-4 py-1.5 bg-black/60 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest inline-block rounded-full border border-white/20">
+            <div className="absolute bottom-6 left-0 right-0 text-center z-10 flex flex-col items-center gap-2">
+                <p className="px-4 py-1.5 bg-black/80 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest inline-block rounded-full border border-white/20 shadow-lg animate-pulse">
                     Scanning for Barcode...
                 </p>
+                <p className="text-[9px] text-white/40 font-bold uppercase tracking-tighter">
+                    Center product barcode in the frame
+                </p>
             </div>
+
+            {/* Background Gradient */}
+            <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/40 to-transparent pointer-events-none" />
         </div>
     );
 };
