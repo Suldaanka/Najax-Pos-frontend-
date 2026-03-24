@@ -37,15 +37,12 @@ export function SignupForm({
     setGoogleLoading(true);
     setError(null);
     try {
-      const { error } = await authClient.signIn.social({
-        provider: "google",
-        callbackURL: `${window.location.origin}/dashboard`,
-      });
-      if (error) {
-        setError(error.message || "Google sign-up failed. Please try again.");
-        setGoogleLoading(false);
-      }
-      // On success, Google redirects — no manual navigation needed
+      // Redirect directly to backend OAuth start URL.
+      // This ensures the state cookie is set AND read on the same backend domain,
+      // preventing state_mismatch errors from cross-domain cookie restrictions.
+      const backendAuthUrl = process.env.NEXT_PUBLIC_BACKEND_AUTH_URL || "https://najax-pos-production.up.railway.app/api/auth";
+      const callbackURL = encodeURIComponent(`${window.location.origin}/dashboard`);
+      window.location.href = `${backendAuthUrl}/sign-in/social?provider=google&callbackURL=${callbackURL}`;
     } catch {
       setError("Google sign-up failed. Please try again.");
       setGoogleLoading(false);
