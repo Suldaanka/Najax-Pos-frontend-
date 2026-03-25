@@ -11,17 +11,12 @@ const authBaseURL = typeof window !== "undefined"
         ? `${process.env.NEXT_PUBLIC_FRONTEND_URL}/api/auth`
         : "https://najax-pos-frontend-production.up.railway.app/api/auth");
 
-// We define a specialized type that informs the client about enabled server features.
-// This allows forgetPassword and changePassword methods to be available without
-// requiring a direct file-system link to the backend (important for separate repos).
-interface BetterAuthServerSchema {
-    emailAndPassword?: {
-        enabled: true;
-    };
-}
-
-export const authClient = createAuthClient<BetterAuthServerSchema>({
+// In separate repositories, the automatic type inference for emailAndPassword functionality
+// can sometimes fail. We manually bypass the instance type to ensure forgetPassword, 
+// resetPassword, and changePassword are available during the build.
+export const authClient = createAuthClient({
     baseURL: authBaseURL,
-});
+}) as any; 
 
+// Export core hooks and methods
 export const { signIn, signOut, signUp, useSession } = authClient;
