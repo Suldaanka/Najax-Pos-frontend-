@@ -1,4 +1,5 @@
 import { createAuthClient } from "better-auth/react";
+import { emailAndPassword } from "better-auth/client/plugins";
 
 // Route auth through the frontend's own Next.js proxy (/api/* → backend).
 // This is REQUIRED for Railway deployments: *.up.railway.app subdomains are on the
@@ -13,6 +14,9 @@ const authBaseURL = typeof window !== "undefined"
 
 export const authClient = createAuthClient({
     baseURL: authBaseURL,
+    plugins: [
+        emailAndPassword()
+    ]
 });
 
 export const { signIn, signOut, signUp, useSession } = authClient;
