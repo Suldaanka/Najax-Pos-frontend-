@@ -92,7 +92,8 @@ export default function BillingPage() {
                 setPaymentStatus(null);
             }
         } catch (err: any) {
-            toast.error(err.message || "Failed to initiate payment");
+            const msg = err.response?.data?.message || err.message || "Failed to initiate payment";
+            toast.error(msg);
         } finally {
             setIsRenewing(false);
         }
