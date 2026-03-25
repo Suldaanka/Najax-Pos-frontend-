@@ -36,6 +36,7 @@ function RoleGuard({ children }: { children: React.ReactNode }) {
                 "/dashboard/settings",
                 "/dashboard/billing",
                 "/dashboard/business/new",
+                "/dashboard/audit-logs",
             ];
             
             const isRestricted = restrictedPaths.some(p => pathname === p || pathname.startsWith(`${p}/`));

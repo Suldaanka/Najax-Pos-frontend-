@@ -15,6 +15,7 @@ import {
   Loader2,
   Repeat,
   ShoppingBag,
+  ShieldAlert,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -111,6 +112,11 @@ const data = {
       title: "Settings",
       url: "/dashboard/settings",
       icon: Command,
+    },
+    {
+      title: "Audit Logs",
+      url: "/dashboard/audit-logs",
+      icon: ShieldAlert,
     },
   ],
   projects: [
