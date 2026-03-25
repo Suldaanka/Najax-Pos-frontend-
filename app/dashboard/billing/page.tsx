@@ -128,7 +128,7 @@ export default function BillingPage() {
     return (
         <div className="flex flex-col gap-6 max-w-5xl mx-auto w-full">
             <div>
-                <h2 className="text-2xl font-bold tracking-tight">Billing & Subscriptions</h2>
+                <h2 className="text-2xl font-bold tracking-tight">Billing & Subscriptions <span className="text-[10px] text-muted-foreground opacity-50">v1.1</span></h2>
                 <p className="text-muted-foreground">
                     Manage your subscription plan and billing history.
                 </p>
