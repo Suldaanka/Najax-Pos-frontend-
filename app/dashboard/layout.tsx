@@ -15,6 +15,44 @@ import { useEffect, useState } from "react";
 import { CartProvider } from "@/lib/cart-context";
 import { CartSidebar } from "@/components/cart-sidebar";
 import { customersApi } from "@/lib/api";
+import { RoleProvider, useRole } from "@/lib/role-context";
+
+function RoleGuard({ children }: { children: React.ReactNode }) {
+    const pathname = usePathname();
+    const router = useRouter();
+    const { role, isLoadingRole } = useRole();
+
+    useEffect(() => {
+        if (isLoadingRole) return;
+        
+        if (role === "STAFF") {
+            const restrictedPaths = [
+                "/dashboard/suppliers",
+                "/dashboard/purchases",
+                "/dashboard/analysis",
+                "/dashboard/recurring-expenses",
+                "/dashboard/loans",
+                "/dashboard/staff",
+                "/dashboard/settings",
+                "/dashboard/billing",
+                "/dashboard/business/new",
+            ];
+            
+            const isRestricted = restrictedPaths.some(p => pathname === p || pathname.startsWith(`${p}/`));
+            
+            if (isRestricted) {
+                router.push("/dashboard");
+            }
+        }
+    }, [role, isLoadingRole, pathname, router]);
+
+    // Give priority to role loading to avoid flashing restricted screens
+    if (isLoadingRole) {
+        return <div className="flex flex-1 items-center justify-center min-h-screen">Verifying Access...</div>;
+    }
+
+    return <>{children}</>;
+}
 
 export default function DashboardLayout({
     children,
@@ -48,8 +86,10 @@ export default function DashboardLayout({
     const isPOS = pathname === "/dashboard/pos"
 
     return (
-        <CartProvider>
-            <SidebarProvider>
+        <RoleProvider>
+            <RoleGuard>
+                <CartProvider>
+                    <SidebarProvider>
                 <AppSidebar />
                 <SidebarInset className="flex h-screen overflow-hidden">
                     <div className="flex flex-1 flex-row overflow-hidden min-h-0">
@@ -75,6 +115,8 @@ export default function DashboardLayout({
                     </div>
                 </SidebarInset>
             </SidebarProvider>
-        </CartProvider>
+                </CartProvider>
+            </RoleGuard>
+        </RoleProvider>
     )
 }

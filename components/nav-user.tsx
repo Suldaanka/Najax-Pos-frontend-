@@ -32,6 +32,7 @@ import {
 
 import { signOut } from "@/lib/auth-client"
 import { useRouter } from "next/navigation"
+import { useRole } from "@/lib/role-context"
 
 export function NavUser({
   user,
@@ -44,6 +45,7 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar()
   const router = useRouter()
+  const { role } = useRole()
 
   const handleLogout = async () => {
     await signOut({
@@ -93,31 +95,39 @@ export function NavUser({
                 </div>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => router.push("/dashboard/analysis")}>
-                <Sparkles />
-                Upgrade to Pro
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
+            {role !== "STAFF" && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem onClick={() => router.push("/dashboard/analysis")}>
+                      <Sparkles />
+                      Upgrade to Pro
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                </>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => router.push("/dashboard/profile")}>
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push("/dashboard/billing")}>
-                <CreditCard />
-                Billing
-              </DropdownMenuItem>
+              {role !== "STAFF" && (
+                  <DropdownMenuItem onClick={() => router.push("/dashboard/billing")}>
+                    <CreditCard />
+                    Billing
+                  </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={() => router.push("/dashboard/notifications")}>
                 <Bell />
                 Notifications
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push("/dashboard/business/new")}>
-                <Sparkles className="text-amber-500" />
-                Invitations
-              </DropdownMenuItem>
+              {role !== "STAFF" && (
+                  <DropdownMenuItem onClick={() => router.push("/dashboard/business/new")}>
+                    <Sparkles className="text-amber-500" />
+                    Invitations
+                  </DropdownMenuItem>
+              )}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>

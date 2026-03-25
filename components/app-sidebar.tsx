@@ -32,6 +32,7 @@ import {
 
 // This is sample data.
 import { useSession } from "@/lib/auth-client"
+import { useRole } from "@/lib/role-context"
 
 const data = {
   navMain: [
@@ -123,6 +124,7 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = useSession();
+  const { role } = useRole();
   const [businesses, setBusinesses] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState<boolean>(true);
 
@@ -176,7 +178,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         )}
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={data.navMain.filter(item => {
+            if (role === 'STAFF') {
+                const allowed = [
+                    "/dashboard", 
+                    "/dashboard/pos", 
+                    "/dashboard/products", 
+                    "/dashboard/categories",
+                    "/dashboard/sales", 
+                    "/dashboard/customers", 
+                    "/dashboard/expenses",
+                    "/dashboard/inventory-logs"
+                ];
+                return allowed.includes(item.url);
+            }
+            return true;
+        })} />
         <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>
