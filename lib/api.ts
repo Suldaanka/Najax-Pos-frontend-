@@ -126,3 +126,9 @@ export const inventoryApi = {
     // Stock Logs
     getStockLogs: (productId?: string) => apiFetch(productId ? `/inventory/stock-logs/${productId}` : '/inventory/stock-logs'),
 };
+
+export const subscriptionsApi = {
+    getStatus: () => apiFetch('/subscriptions/status'),
+    pay: (data: any) => apiFetch('/subscriptions/pay', { method: 'POST', body: JSON.stringify(data) }),
+    verify: (id: string) => apiFetch(`/subscriptions/verify/${id}`),
+};

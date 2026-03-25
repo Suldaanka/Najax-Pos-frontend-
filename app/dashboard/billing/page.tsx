@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
+import { subscriptionsApi } from "@/lib/api";
 import {
     Dialog,
     DialogContent,
@@ -48,8 +49,7 @@ export default function BillingPage() {
 
     const fetchSubscription = async () => {
         try {
-            const { data, error } = await authClient.$fetch("/api/subscriptions/status");
-            if (error) throw error;
+            const data = await subscriptionsApi.getStatus();
             setBusiness(data);
         } catch (err) {
             console.error("Failed to fetch subscription:", err);
@@ -70,17 +70,12 @@ export default function BillingPage() {
         }
         setIsRenewing(true);
         try {
-            const { data, error } = await authClient.$fetch("/api/subscriptions/pay", {
-                method: "POST",
-                body: {
-                    plan: renewPlan,
-                    amount: renewAmount,
-                    phone: phone,
-                    gateway: gateway
-                }
+            const data = await subscriptionsApi.pay({
+                plan: renewPlan,
+                amount: renewAmount,
+                phone: phone,
+                gateway: gateway
             }) as any;
-
-            if (error) throw error;
 
             if (data.status === "PENDING") {
                 setPaymentStatus("PENDING");
@@ -102,8 +97,7 @@ export default function BillingPage() {
     const checkPaymentStatus = async () => {
         if (!pendingSubscriptionId) return;
         try {
-            const { data, error } = await authClient.$fetch(`/api/subscriptions/verify/${pendingSubscriptionId}`) as any;
-            if (error) throw error;
+            const data = await subscriptionsApi.verify(pendingSubscriptionId) as any;
 
             if (data.status === "SUCCESS") {
                 toast.success("Payment verified! Subscription active.");
