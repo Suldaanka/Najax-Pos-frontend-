@@ -37,11 +37,8 @@ export function SignupForm({
     setGoogleLoading(true);
     setError(null);
     try {
-      await authClient.signIn.social({
-        provider: "google",
-        callbackURL: `${window.location.origin}/dashboard`,
-      });
-      // On success, Better Auth will redirect the browser to Google
+      // Force OAuth to start EXCLUSIVELY from the backend domain to prevent cross-origin proxy state_mismatch.
+      window.location.href = `https://najax-pos-production.up.railway.app/api/auth/signin/google?callbackURL=${encodeURIComponent(window.location.origin + '/dashboard')}&errorURL=${encodeURIComponent(window.location.origin + '/login')}`;
     } catch {
       setError("Google sign-up failed. Please try again.");
       setGoogleLoading(false);

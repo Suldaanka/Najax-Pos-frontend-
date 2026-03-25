@@ -315,7 +315,20 @@ export default function SalesPage() {
                         ) : filteredSales.map((sale) => (
                             <TableRow key={sale.id}>
                                 <TableCell className="font-medium text-[10px] uppercase tracking-tighter">#{sale.id.slice(-6)}</TableCell>
-                                <TableCell className="font-semibold">{sale.customer?.name || "Cash Customer"}</TableCell>
+                                <TableCell className="font-semibold">
+                                    {sale.customer?.name ? (
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[10px] font-bold">
+                                                {sale.customer.name.charAt(0).toUpperCase()}
+                                            </div>
+                                            <span>{sale.customer.name}</span>
+                                        </div>
+                                    ) : (
+                                        <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-50">
+                                            Walk-in
+                                        </Badge>
+                                    )}
+                                </TableCell>
                                 <TableCell>
                                     <div className="flex flex-wrap gap-1 max-w-[200px]">
                                         {sale.items?.map((item: any) => (
@@ -383,8 +396,14 @@ export default function SalesPage() {
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div>
-                                    <span className="text-muted-foreground block">Customer</span>
-                                    <span className="font-bold">{selectedSale.customer?.name || "Cash Customer"}</span>
+                                    <span className="text-muted-foreground block mb-1">Customer</span>
+                                    {selectedSale.customer?.name ? (
+                                        <span className="font-bold">{selectedSale.customer.name}</span>
+                                    ) : (
+                                        <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200">
+                                            Walk-in Customer
+                                        </Badge>
+                                    )}
                                 </div>
                                 <div>
                                     <span className="text-muted-foreground block">Date</span>
