@@ -41,7 +41,7 @@ export default function BillingPage() {
     const [loading, setLoading] = useState(true);
     const [isRenewing, setIsRenewing] = useState(false);
     const [renewPlan, setRenewPlan] = useState("Pro Monthly");
-    const [renewAmount, setRenewAmount] = useState("49");
+    const [renewAmount, setRenewAmount] = useState("1");
     const [phone, setPhone] = useState("");
     const [gateway, setGateway] = useState("waafi");
     const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
@@ -191,14 +191,14 @@ export default function BillingPage() {
                                         <Label htmlFor="plan">Select Plan</Label>
                                         <Select value={renewPlan} onValueChange={(val) => {
                                             setRenewPlan(val);
-                                            setRenewAmount(val.includes("Yearly") ? "499" : "49");
+                                            setRenewAmount(val.includes("Yearly") ? "10" : "1");
                                         }}>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select a plan" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="Pro Monthly">Pro Monthly ($49/mo)</SelectItem>
-                                                <SelectItem value="Pro Yearly">Pro Yearly ($499/yr)</SelectItem>
+                                                <SelectItem value="Pro Monthly">Pro Monthly ($1/mo)</SelectItem>
+                                                <SelectItem value="Pro Yearly">Pro Yearly ($10/yr)</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
