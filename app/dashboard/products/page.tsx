@@ -60,6 +60,7 @@ export default function ProductsPage() {
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [loadingLogs, setLoadingLogs] = useState(false);
+    const [stockLogs, setStockLogs] = useState<any[]>([]);
     const { currentBranchId, branches } = useBranch();
     const [isTransferOpen, setIsTransferOpen] = useState(false);
     const [transferForm, setTransferForm] = useState({
