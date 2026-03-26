@@ -35,6 +35,7 @@ import { Download, } from "lucide-react";
 import { customersApi } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { exportToExcel, exportToPDF } from "@/lib/export-utils";
+import { useBranch } from "@/lib/branch-context";
 
 export default function CustomersPage() {
     const { data: session } = useSession();
@@ -44,6 +45,7 @@ export default function CustomersPage() {
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [editingCustomer, setEditingCustomer] = useState<any>(null);
     const [searchQuery, setSearchQuery] = useState("");
+    const { currentBranchId } = useBranch();
 
     const businessId = (session?.user as any)?.activeBusinessId || "cm7evm3030000m908qgeks2rj";
 
@@ -51,12 +53,12 @@ export default function CustomersPage() {
         if (businessId) {
             fetchCustomers();
         }
-    }, [businessId]);
+    }, [businessId, currentBranchId]);
 
     const fetchCustomers = async () => {
         setLoading(true);
         try {
-            const data = await customersApi.getAll(businessId);
+            const data = await customersApi.getAll(businessId, currentBranchId);
             setCustomers(data);
         } catch (error: any) {
             toast.error("Failed to fetch customers: " + error.message);
@@ -100,6 +102,7 @@ export default function CustomersPage() {
             businessId,
             name: formData.get("name") as string,
             phone: formData.get("phone") as string,
+            branchId: currentBranchId,
         };
 
         try {

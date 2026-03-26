@@ -40,7 +40,8 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
 }
 
 export const productsApi = {
-    getAll: (businessId: string) => apiFetch(`/products?businessId=${businessId}`),
+    getAll: (businessId: string, branchId?: string | null) => 
+        apiFetch(`/products?businessId=${businessId}${branchId ? `&branchId=${branchId}` : ''}`),
     create: (data: any) => apiFetch('/products', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: any) => apiFetch(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     adjustStock: (id: string, data: { stockQuantity: number, branchId?: string }) => apiFetch(`/products/${id}/adjust-stock`, { method: 'PATCH', body: JSON.stringify(data) }),
@@ -48,31 +49,45 @@ export const productsApi = {
 };
 
 export const staffApi = {
-    getAll: (businessId: string) => apiFetch(`/staff?businessId=${businessId}`),
-    getPerformance: (businessId: string) => apiFetch(`/staff/performance?businessId=${businessId}`),
+    getAll: (businessId: string, branchId?: string | null) => 
+        apiFetch(`/staff?businessId=${businessId}${branchId ? `&branchId=${branchId}` : ''}`),
+    getPerformance: (businessId: string, branchId?: string | null) => 
+        apiFetch(`/staff/performance?businessId=${businessId}${branchId ? `&branchId=${branchId}` : ''}`),
     updateRole: (userId: string, role: string) => apiFetch(`/business/users/${userId}/role`, { method: 'PUT', body: JSON.stringify({ role }) }),
     remove: (id: string) => apiFetch(`/staff/${id}`, { method: 'DELETE' }),
 };
 
 export const expensesApi = {
-    getAll: (businessId: string) => apiFetch(`/expenses?businessId=${businessId}`),
+    getAll: (businessId: string, branchId?: string | null) => 
+        apiFetch(`/expenses?businessId=${businessId}${branchId ? `&branchId=${branchId}` : ''}`),
     create: (data: any) => apiFetch('/expenses', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: any) => apiFetch(`/expenses/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (id: string) => apiFetch(`/expenses/${id}`, { method: 'DELETE' }),
 };
 
 export const salesApi = {
-    getAll: () => apiFetch('/sales'),
+    getAll: (branchId?: string | null) => 
+        apiFetch(`/sales${branchId ? `?branchId=${branchId}` : ''}`),
     delete: (id: string) => apiFetch(`/sales/${id}`, { method: 'DELETE' }),
 };
 
 export const customersApi = {
-    getAll: (businessId: string) => apiFetch(`/customers?businessId=${businessId}`),
+    getAll: (businessId: string, branchId?: string | null) => 
+        apiFetch(`/customers?businessId=${businessId}${branchId ? `&branchId=${branchId}` : ''}`),
     getOne: (id: string) => apiFetch(`/customers/${id}`),
     create: (data: any) => apiFetch('/customers', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: any) => apiFetch(`/customers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (id: string) => apiFetch(`/customers/${id}`, { method: 'DELETE' }),
 };
+
+export const loansApi = {
+    getAll: (branchId?: string | null) => 
+        apiFetch(`/loans${branchId ? `?branchId=${branchId}` : ''}`),
+    create: (data: any) => apiFetch('/loans', { method: 'POST', body: JSON.stringify(data) }),
+    recordPayment: (id: string, data: any) => apiFetch(`/loans/${id}/payments`, { method: 'POST', body: JSON.stringify(data) }),
+    updateStatus: (id: string, status: string) => apiFetch(`/loans/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+};
+
 export const businessApi = {
     get: () => apiFetch('/business'),
     getAllMyBusinesses: () => apiFetch('/business/my-businesses'),
@@ -97,14 +112,16 @@ export const recurringExpensesApi = {
 
 export const invitationsApi = {
     send: (data: any) => apiFetch('/invitations', { method: 'POST', body: JSON.stringify(data) }),
-    getAll: (businessId: string) => apiFetch(`/invitations?businessId=${businessId}`),
+    getAll: (businessId: string, branchId?: string | null) => 
+        apiFetch(`/invitations?businessId=${businessId}${branchId ? `&branchId=${branchId}` : ''}`),
     getMyInvitations: () => apiFetch('/invitations/mine'),
     accept: (payload: { id?: string, token?: string }) => apiFetch('/invitations/accept', { method: 'POST', body: JSON.stringify(payload) }),
     delete: (id: string) => apiFetch(`/invitations/${id}`, { method: 'DELETE' }),
 };
 
 export const dashboardApi = {
-    getStats: () => apiFetch('/dashboard'),
+    getStats: (branchId?: string | null) => 
+        apiFetch(`/dashboard${branchId ? `?branchId=${branchId}` : ''}`),
 };
 
 export const inventoryApi = {
@@ -115,7 +132,8 @@ export const inventoryApi = {
     deleteSupplier: (id: string) => apiFetch(`/inventory/suppliers/${id}`, { method: 'DELETE' }),
 
     // Purchases
-    getPurchases: () => apiFetch('/inventory/purchases'),
+    getPurchases: (branchId?: string | null) => 
+        apiFetch(`/inventory/purchases${branchId ? `?branchId=${branchId}` : ''}`),
     createPurchase: (data: any) => apiFetch('/inventory/purchases', { method: 'POST', body: JSON.stringify(data) }),
     deletePurchase: (id: string) => apiFetch(`/inventory/purchases/${id}`, { method: 'DELETE' }),
 
@@ -141,6 +159,7 @@ export const branchesApi = {
 };
 
 export const refundsApi = {
-    getAll: () => apiFetch('/refunds'),
+    getAll: (branchId?: string | null) => 
+        apiFetch(`/refunds${branchId ? `?branchId=${branchId}` : ''}`),
     create: (data: any) => apiFetch('/refunds', { method: 'POST', body: JSON.stringify(data) }),
 };

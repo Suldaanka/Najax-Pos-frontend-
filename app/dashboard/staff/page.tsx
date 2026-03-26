@@ -53,7 +53,7 @@ export default function StaffPage() {
     const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
     const [selectedMember, setSelectedMember] = useState<any>(null);
     const [processingRole, setProcessingRole] = useState(false);
-    const { branches } = useBranch();
+    const { currentBranchId, branches } = useBranch();
 
     const businessId = (session?.user as any)?.activeBusinessId;
 
@@ -61,15 +61,15 @@ export default function StaffPage() {
         if (businessId) {
             fetchData();
         }
-    }, [businessId]);
+    }, [businessId, currentBranchId]);
 
     const fetchData = async () => {
         setLoading(true);
         try {
             const [staffData, inviteData, performanceData] = await Promise.all([
-                staffApi.getAll(businessId),
-                invitationsApi.getAll(businessId),
-                staffApi.getPerformance(businessId)
+                staffApi.getAll(businessId, currentBranchId),
+                invitationsApi.getAll(businessId, currentBranchId),
+                staffApi.getPerformance(businessId, currentBranchId)
             ]);
             setStaff(staffData);
             setInvitations(inviteData.invitations || []);

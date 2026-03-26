@@ -28,9 +28,11 @@ import { toast } from "sonner";
 import { expensesApi } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { exportToExcel, exportToPDF } from "@/lib/export-utils";
+import { useBranch } from "@/lib/branch-context";
 
 export default function ExpensesPage() {
   const { data: session } = useSession();
+  const { currentBranchId, currentBranch } = useBranch();
   const [expenses, setExpenses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -45,13 +47,13 @@ export default function ExpensesPage() {
     if (businessId) {
       fetchExpenses();
     }
-  }, [businessId]);
+  }, [businessId, currentBranchId]);
 
   const fetchExpenses = async () => {
     if (!businessId) return;
     setLoading(true);
     try {
-      const data = await expensesApi.getAll(businessId);
+      const data = await expensesApi.getAll(businessId, currentBranchId);
       setExpenses(data);
     } catch (error: any) {
       toast.error("Failed to fetch expenses: " + error.message);
@@ -105,6 +107,7 @@ export default function ExpensesPage() {
       category: formData.get("category") as string,
       amount: parseFloat(formData.get("amount") as string),
       date: new Date().toISOString(),
+      branchId: currentBranchId,
     };
 
     try {

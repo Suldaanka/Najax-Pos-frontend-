@@ -59,7 +59,7 @@ export default function POSPage() {
             fetchProducts();
             fetchCategories();
         }
-    }, [businessId]);
+    }, [businessId, currentBranchId]);
 
     const fetchCategories = async () => {
         try {
@@ -72,7 +72,7 @@ export default function POSPage() {
 
     const fetchProducts = async () => {
         try {
-            const data = await productsApi.getAll(businessId);
+            const data = await productsApi.getAll(businessId, currentBranchId);
             setProducts(data);
         } catch (error) {
             console.error("Failed to fetch products:", error);

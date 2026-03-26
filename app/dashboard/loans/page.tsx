@@ -27,7 +27,8 @@ import {
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useSession } from "@/lib/auth-client";
-import { customersApi, apiFetch } from "@/lib/api";
+import { customersApi, loansApi } from "@/lib/api";
+import { useBranch } from "@/lib/branch-context";
 import Link from "next/link";
 import {
     Select,
@@ -39,6 +40,7 @@ import {
 
 export default function LoansPage() {
     const { data: session } = useSession();
+    const { currentBranchId, currentBranch } = useBranch();
     const [loans, setLoans] = useState<any[]>([]);
     const [customers, setCustomers] = useState<any[]>([]);
     const [isAddOpen, setIsAddOpen] = useState(false);
@@ -53,9 +55,8 @@ export default function LoansPage() {
     const [selectedCustomerName, setSelectedCustomerName] = useState("");
 
     const fetchLoans = async () => {
-        if (!(session?.user as any)?.activeBusinessId) return;
         try {
-            const data = await apiFetch("/loans");
+            const data = await loansApi.getAll(currentBranchId);
             setLoans(data.map((l: any) => ({
                 id: l.id,
                 customerId: l.customerId,
@@ -80,13 +81,14 @@ export default function LoansPage() {
     };
 
     useEffect(() => {
-        if ((session?.user as any)?.activeBusinessId) {
-            fetchLoans();
-            customersApi.getAll((session?.user as any).activeBusinessId)
+        fetchLoans();
+        const businessId = (session?.user as any)?.activeBusinessId;
+        if (businessId) {
+            customersApi.getAll(businessId, currentBranchId)
                 .then(setCustomers)
                 .catch(err => console.error("Failed to fetch customers:", err));
         }
-    }, [session]);
+    }, [currentBranchId, session]);
 
     const handleIssueCredit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -96,9 +98,11 @@ export default function LoansPage() {
         const due = formData.get("due") as string;
 
         try {
-            await apiFetch("/loans", {
-                method: 'POST',
-                body: JSON.stringify({ customerId, totalAmount, dueDate: due })
+            await loansApi.create({ 
+                customerId, 
+                totalAmount, 
+                dueDate: due,
+                branchId: currentBranchId 
             });
             setIsAddOpen(false);
             fetchLoans();
@@ -113,12 +117,9 @@ export default function LoansPage() {
         if (!selectedLoan || !paymentAmount) return;
 
         try {
-            await apiFetch(`/loans/${selectedLoan.id}/payments`, {
-                method: 'POST',
-                body: JSON.stringify({
-                    amount: parseFloat(paymentAmount),
-                    nextPaymentDate: (e.target as any).nextPayment?.value || null
-                })
+            await loansApi.recordPayment(selectedLoan.id, {
+                amount: parseFloat(paymentAmount),
+                nextPaymentDate: (e.target as any).nextPayment?.value || null
             });
             setIsPaymentOpen(false);
             setPaymentAmount("");
@@ -131,10 +132,7 @@ export default function LoansPage() {
 
     const markAsPaid = async (id: string) => {
         try {
-            await apiFetch(`/loans/${id}/status`, {
-                method: 'PUT',
-                body: JSON.stringify({ status: 'PAID' })
-            });
+            await loansApi.updateStatus(id, 'PAID');
             fetchLoans();
             toast.success("Loan marked as paid");
         } catch (error) {

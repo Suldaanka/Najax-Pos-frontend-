@@ -35,9 +35,11 @@ import { toast } from "sonner";
 import { useSession } from "@/lib/auth-client";
 import { customersApi, salesApi } from "@/lib/api";
 import { exportToExcel, exportToPDF } from "@/lib/export-utils";
+import { useBranch } from "@/lib/branch-context";
 
 export default function SalesPage() {
     const { data: session } = useSession();
+    const { currentBranchId, currentBranch } = useBranch();
     const [sales, setSales] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isAddOpen, setIsAddOpen] = useState(false);
@@ -51,16 +53,16 @@ export default function SalesPage() {
     useEffect(() => {
         if (businessId) {
             fetchSales();
-            customersApi.getAll(businessId)
+            customersApi.getAll(businessId, currentBranchId)
                 .then(setCustomers)
                 .catch(err => console.error("Failed to fetch customers:", err));
         }
-    }, [businessId]);
+    }, [businessId, currentBranchId]);
 
     const fetchSales = async () => {
         setLoading(true);
         try {
-            const data = await salesApi.getAll();
+            const data = await salesApi.getAll(currentBranchId);
             setSales(data);
         } catch (error: any) {
             toast.error("Failed to fetch sales: " + error.message);

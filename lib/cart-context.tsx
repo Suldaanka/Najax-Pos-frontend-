@@ -58,7 +58,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
         if (businessId) {
             console.log("CartContext: Fetching customers for business:", businessId);
-            customersApi.getAll(businessId)
+            customersApi.getAll(businessId, currentBranchId)
                 .then(data => {
                     const list = Array.isArray(data) ? data : (data?.data || data?.customers || []);
                     setCustomers(list);
@@ -76,7 +76,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                 })
                 .catch(err => console.error("Failed to fetch exchange rate:", err));
         }
-    }, [session?.user]);
+    }, [session?.user, currentBranchId]);
 
     const addToCart = useCallback((product: any) => {
         setCart(prev => {

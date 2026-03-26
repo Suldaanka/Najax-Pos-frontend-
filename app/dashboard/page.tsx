@@ -15,6 +15,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { format } from "date-fns";
 import { dashboardApi } from "@/lib/api";
+import { useBranch } from "@/lib/branch-context";
 
 import {
   ChartConfig,
@@ -46,13 +47,15 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export default function DashboardPage() {
+  const { currentBranchId, currentBranch } = useBranch();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboardStats = async () => {
+      setLoading(true);
       try {
-        const rawData = await dashboardApi.getStats();
+        const rawData = await dashboardApi.getStats(currentBranchId);
         setData(rawData);
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
@@ -61,7 +64,7 @@ export default function DashboardPage() {
       }
     };
     fetchDashboardStats();
-  }, []);
+  }, [currentBranchId]);
 
   if (loading) {
     return (

@@ -127,7 +127,7 @@ export default function ProductsPage() {
             fetchProducts();
             fetchCategories();
         }
-    }, [businessId]);
+    }, [businessId, currentBranchId]);
 
     // Bulk calculation for Add Form
     useEffect(() => {
@@ -166,7 +166,7 @@ export default function ProductsPage() {
     const fetchProducts = async () => {
         setLoading(true);
         try {
-            const data = await productsApi.getAll(businessId);
+            const data = await productsApi.getAll(businessId, currentBranchId);
             setProducts(data);
         } catch (error: any) {
             toast.error("Failed to fetch products: " + error.message);
@@ -242,6 +242,7 @@ export default function ProductsPage() {
             piecesPerBag: trackBags ? addForm.piecesPerBag : (isKg && addForm.useBulkCalc) ? addForm.kgPerBag : null,
             wholesalePrice: addForm.wholesalePrice || null,
             minWholesaleQty: addForm.minWholesaleQty || null,
+            branchId: currentBranchId,
         };
 
         try {
