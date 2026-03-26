@@ -10,6 +10,7 @@ interface Branch {
     name: string;
     isMain: boolean;
     address?: string;
+    phone?: string;
 }
 
 interface BranchContextType {
