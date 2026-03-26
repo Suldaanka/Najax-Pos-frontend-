@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { toast } from "sonner";
 import { apiFetch, customersApi } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
+import { useBranch } from "./branch-context";
 
 export interface CartItem {
     id: string;
@@ -40,6 +41,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
     const { data: session } = useSession();
+    const { currentBranchId } = useBranch();
     const [cart, setCart] = useState<CartItem[]>([]);
     const [customers, setCustomers] = useState<any[]>([]);
     const [selectedCustomerId, setSelectedCustomerId] = useState<string>("cash");
@@ -159,6 +161,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                 paymentCurrency,
                 exchangeRate: paymentCurrency === "SOS" ? exchangeRate : null,
                 paidAmountShiling: paymentCurrency === "SOS" ? finalAmount * exchangeRate : null,
+                branchId: currentBranchId,
                 items: cart.map(item => ({
                     productId: item.id,
                     quantity: Number(item.quantity),

@@ -22,6 +22,7 @@ import { NavMain } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
 import { NavUser } from "@/components/nav-user"
 import { TeamSwitcher } from "@/components/team-switcher"
+import { BranchSwitcher } from "@/components/branch-switcher"
 import { businessApi } from "@/lib/api"
 import {
   Sidebar,
@@ -64,6 +65,11 @@ const data = {
       icon: ShoppingCart,
     },
     {
+      title: "Returns & Refunds",
+      url: "/dashboard/refunds",
+      icon: Receipt,
+    },
+    {
       title: "Suppliers",
       url: "/dashboard/suppliers",
       icon: Users,
@@ -102,6 +108,11 @@ const data = {
       title: "Loans",
       url: "/dashboard/loans",
       icon: HandCoins,
+    },
+    {
+      title: "Branches",
+      url: "/dashboard/settings/branches",
+      icon: Store,
     },
     {
       title: "Staff",
@@ -180,7 +191,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </div>
           </div>
         ) : (
-          <TeamSwitcher teams={businesses} />
+          <>
+            <TeamSwitcher teams={businesses} />
+            <BranchSwitcher />
+          </>
         )}
       </SidebarHeader>
       <SidebarContent>
@@ -192,9 +206,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     "/dashboard/products", 
                     "/dashboard/categories",
                     "/dashboard/sales", 
+                    "/dashboard/refunds",
                     "/dashboard/customers", 
                     "/dashboard/expenses",
-                    "/dashboard/inventory-logs"
+                    "/dashboard/inventory-logs",
+                    "/dashboard/settings/branches"
                 ];
                 return allowed.includes(item.url);
             }

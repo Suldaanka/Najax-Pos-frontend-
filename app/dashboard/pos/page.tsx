@@ -10,6 +10,7 @@ import { useSession } from "@/lib/auth-client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/lib/cart-context";
+import { useBranch } from "@/lib/branch-context";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Separator } from "@/components/ui/separator";
@@ -30,7 +31,8 @@ export default function POSPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<string>("All");
     const [isCameraOpen, setIsCameraOpen] = useState(false);
-    const { addToCart, isCartOpen, setIsCartOpen, cart } = useCart();
+    const { isCartOpen, setIsCartOpen, addToCart, cart } = useCart();
+    const { currentBranchId } = useBranch();
 
     // Shared beep sound for every item added (click or scan)
     const playBeep = () => {
@@ -135,7 +137,11 @@ export default function POSPage() {
                 if (buffer.length > 2) {
                     const product = products.find(p => p.barcode === buffer);
                     if (product) {
-                        if (product.stockQuantity > 0) {
+                        const stock = currentBranchId 
+                            ? product.inventoryLevels?.find((il: any) => il.branchId === currentBranchId)?.stockQuantity || 0
+                            : product.stockQuantity;
+                        
+                        if (stock > 0) {
                             addToCart(product);
                             playBeep();
                         } else {
@@ -235,7 +241,11 @@ export default function POSPage() {
 
                                         const product = products.find(p => p.barcode === text);
                                         if (product) {
-                                            if (product.stockQuantity > 0) {
+                                            const stock = currentBranchId 
+                                                ? product.inventoryLevels?.find((il: any) => il.branchId === currentBranchId)?.stockQuantity || 0
+                                                : product.stockQuantity;
+
+                                            if (stock > 0) {
                                                 addToCart(product);
                                                 playBeep();
                                                 toast.success(`Scanned: ${product.name}`, {
@@ -300,18 +310,23 @@ export default function POSPage() {
                 {/* Products Scroll Section */}
                 <ScrollArea className="flex-1 min-h-0 px-6">
                     <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 py-4 pb-6">
-                        {filteredProducts.map((product) => (
+                        {filteredProducts.map((product) => {
+                            const stock = currentBranchId 
+                                ? product.inventoryLevels?.find((il: any) => il.branchId === currentBranchId)?.stockQuantity || 0
+                                : product.stockQuantity;
+
+                            return (
                             <div
                                 key={product.id}
                                 onClick={() => {
-                                    if (product.stockQuantity > 0) {
+                                    if (stock > 0) {
                                         addToCart(product);
                                         playBeep();
                                     }
                                 }}
                                 className={cn(
                                     "group relative flex flex-col bg-card hover:bg-accent/50 transition-all rounded-2xl cursor-pointer shadow-sm hover:shadow-xl border border-border/50 hover:border-primary/20 active:scale-[0.98] duration-300",
-                                    product.stockQuantity === 0 &&
+                                    stock === 0 &&
                                     "opacity-60 cursor-not-allowed grayscale"
                                 )}
                             >
@@ -322,17 +337,17 @@ export default function POSPage() {
 
                                     {/* Stock Badges */}
                                     <div className="absolute top-3 left-3 flex flex-col gap-1">
-                                        {product.stockQuantity < 10 &&
-                                            product.stockQuantity > 0 && (
+                                        {stock < 10 &&
+                                            stock > 0 && (
                                                 <Badge
                                                     variant="outline"
                                                     className="text-[8px] font-black uppercase"
                                                 >
-                                                    Only {product.stockQuantity} Ready
+                                                    Only {stock} Ready
                                                 </Badge>
                                             )}
 
-                                        {product.stockQuantity === 0 && (
+                                        {stock === 0 && (
                                             <Badge
                                                 variant="destructive"
                                                 className="text-[8px] font-black uppercase"
@@ -364,12 +379,12 @@ export default function POSPage() {
                                             ${product.sellingPrice}
                                         </span>
                                         <span className="text-[10px] font-bold text-muted-foreground">
-                                            Stock: {product.stockQuantity}
+                                            Stock: {stock}
                                         </span>
                                     </div>
                                 </div>
                             </div>
-                        ))}
+                        )})}
                     </div>
                 </ScrollArea>
             </div>

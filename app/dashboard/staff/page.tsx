@@ -33,10 +33,11 @@ import {
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { staffApi, invitationsApi } from "@/lib/api";
+import { staffApi, invitationsApi, apiFetch } from "@/lib/api";
 import { Download } from "lucide-react";
 import { exportToExcel, exportToPDF } from "@/lib/export-utils";
 import { useSession } from "@/lib/auth-client";
+import { useBranch } from "@/lib/branch-context";
 
 export default function StaffPage() {
     const { data: session } = useSession();
@@ -52,6 +53,7 @@ export default function StaffPage() {
     const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
     const [selectedMember, setSelectedMember] = useState<any>(null);
     const [processingRole, setProcessingRole] = useState(false);
+    const { branches } = useBranch();
 
     const businessId = (session?.user as any)?.activeBusinessId;
 
@@ -128,13 +130,15 @@ export default function StaffPage() {
         const name = formData.get("name") as string;
         const email = formData.get("email") as string;
         const role = formData.get("role") as string;
+        const branchId = formData.get("branchId") as string;
 
         try {
             await invitationsApi.send({
                 email,
                 name,
                 role,
-                businessId
+                businessId,
+                branchId: branchId === "global" ? null : branchId
             });
             toast.success("Invitation processed successfully");
             setIsInviteOpen(false);
@@ -164,16 +168,27 @@ export default function StaffPage() {
         }
     };
 
-    const handleUpdateRole = async (userId: string, role: string) => {
+    const handleUpdateRole = async (userId: string, role: string, branchId?: string | null) => {
         if (!userId || !role) return;
         setProcessingRole(true);
         try {
+            // Update role
             await staffApi.updateRole(userId, role);
-            toast.success("User role updated successfully");
+            
+            // If branchId is provided, we need an endpoint to update user branch.
+            // Since there is no userUpdate endpoint in staffApi, I'll use a generic apiFetch for now.
+            if (branchId !== undefined) {
+                await apiFetch(`/business/users/${userId}/branch`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ branchId })
+                });
+            }
+
+            toast.success("Staff profile updated successfully");
             setIsRoleDialogOpen(false);
             fetchData();
         } catch (error: any) {
-            toast.error("Failed to update role: " + error.message);
+            toast.error("Failed to update staff: " + error.message);
         } finally {
             setProcessingRole(false);
         }
@@ -235,6 +250,22 @@ export default function StaffPage() {
                                             </Select>
                                         </div>
                                     </div>
+                                    <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label htmlFor="branchId" className="text-right">Branch</Label>
+                                        <div className="col-span-3">
+                                            <Select name="branchId" defaultValue="global">
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select branch" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="global">All Branches (Global)</SelectItem>
+                                                    {branches.map(b => (
+                                                        <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
                                 </div>
                                 <DialogFooter>
                                     <Button type="submit">Send Invitation</Button>
@@ -283,6 +314,7 @@ export default function StaffPage() {
                             <TableRow className="hover:bg-transparent">
                                 <TableHead className="text-[10px] font-black uppercase tracking-widest">Member</TableHead>
                                 <TableHead className="text-[10px] font-black uppercase tracking-widest">Role</TableHead>
+                                <TableHead className="text-[10px] font-black uppercase tracking-widest">Branch</TableHead>
                                 <TableHead className="text-[10px] font-black uppercase tracking-widest">Status</TableHead>
                                 <TableHead className="text-[10px] font-black uppercase tracking-widest">Joined</TableHead>
                                 <TableHead className="text-right text-[10px] font-black uppercase tracking-widest">Actions</TableHead>
@@ -291,7 +323,7 @@ export default function StaffPage() {
                         <TableBody>
                             {loading ? (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="text-center py-20 text-muted-foreground italic text-xs">
+                                    <TableCell colSpan={6} className="text-center py-20 text-muted-foreground italic text-xs">
                                         Synchronizing team records...
                                     </TableCell>
                                 </TableRow>
@@ -317,6 +349,9 @@ export default function StaffPage() {
                                                         <Badge variant="outline" className="text-[9px] font-black uppercase px-2 py-0 border-primary/20 text-primary/70">Staff</Badge>
                                                     )}
                                                 </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className="text-[10px] font-bold uppercase text-muted-foreground">{member.user?.branch?.name || "Global"}</span>
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-1.5">
@@ -399,11 +434,41 @@ export default function StaffPage() {
                                                         </SelectContent>
                                                     </Select>
                                                 </div>
+                                                <div className="space-y-2">
+                                                    <Label className="text-[10px] font-black uppercase tracking-widest opacity-50">Branch Assignment</Label>
+                                                    <Select 
+                                                        defaultValue={selectedMember?.user?.branchId || "global"} 
+                                                        onValueChange={(val) => {
+                                                            if (selectedMember) {
+                                                                setSelectedMember({
+                                                                    ...selectedMember, 
+                                                                    user: { ...selectedMember.user, branchId: val === "global" ? null : val }
+                                                                });
+                                                            }
+                                                        }}
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select a branch" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="global">Global (All Branches)</SelectItem>
+                                                            {branches.map(b => (
+                                                                <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
                                             </div>
                                             <DialogFooter>
                                                 <Button variant="outline" onClick={() => setIsRoleDialogOpen(false)}>Cancel</Button>
                                                 <Button 
-                                                    onClick={() => handleUpdateRole(selectedMember?.user?.id, selectedMember?.role)}
+                                                    onClick={() => {
+                                                        // Note: We might need a specific endpoint to update branch, 
+                                                        // but for now let's assume updateRole can handle it or we'll need a separate API call.
+                                                        // Checking staffApi.updateRole in api.ts... it only takes role.
+                                                        // I'll update handleUpdateRole to also handle branch if possible.
+                                                        handleUpdateRole(selectedMember?.user?.id, selectedMember?.role, selectedMember?.user?.branchId);
+                                                    }}
                                                     disabled={processingRole}
                                                 >
                                                     {processingRole ? "Updating..." : "Update Permissions"}
@@ -428,6 +493,9 @@ export default function StaffPage() {
                                             </TableCell>
                                             <TableCell>
                                                 <Badge variant="outline" className="text-[9px] font-black uppercase px-2 py-0 border-amber-500/20 text-amber-600/70">{invite.role}</Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className="text-[10px] font-bold uppercase text-muted-foreground">{invite.branch?.name || "Global"}</span>
                                             </TableCell>
                                             <TableCell>
                                                 <Badge variant="outline" className="animate-pulse bg-amber-500/5 border-amber-500/30 text-amber-600 text-[9px] font-black uppercase px-2 py-0">Pending</Badge>
@@ -456,7 +524,7 @@ export default function StaffPage() {
 
                                     {(filteredStaff.length === 0 && filteredInvitations.length === 0) && (
                                         <TableRow>
-                                            <TableCell colSpan={5} className="text-center py-20 text-muted-foreground italic text-xs">
+                                            <TableCell colSpan={6} className="text-center py-20 text-muted-foreground italic text-xs">
                                                 No staff members found matching "{searchQuery}"
                                             </TableCell>
                                         </TableRow>

@@ -16,6 +16,7 @@ import { CartProvider } from "@/lib/cart-context";
 import { CartSidebar } from "@/components/cart-sidebar";
 import { customersApi } from "@/lib/api";
 import { RoleProvider, useRole } from "@/lib/role-context";
+import { BranchProvider } from "@/lib/branch-context";
 
 function RoleGuard({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -89,34 +90,36 @@ export default function DashboardLayout({
     return (
         <RoleProvider>
             <RoleGuard>
-                <CartProvider>
-                    <SidebarProvider>
-                <AppSidebar />
-                <SidebarInset className="flex h-screen overflow-hidden">
-                    <div className="flex flex-1 flex-row overflow-hidden min-h-0">
-                        <div className="flex flex-col flex-1 overflow-hidden min-h-0">
-                            {!isPOS && (
-                                <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-                                    <SidebarTrigger className="-ml-1" />
-                                    <Separator orientation="vertical" className="mr-2 h-4" />
-                                    <div className="flex flex-1 items-center justify-between">
-                                        <h1 className="text-lg font-semibold">Dashboard</h1>
-                                        <ModeToggle />
+                <BranchProvider>
+                    <CartProvider>
+                        <SidebarProvider>
+                            <AppSidebar />
+                            <SidebarInset className="flex h-screen overflow-hidden">
+                                <div className="flex flex-1 flex-row overflow-hidden min-h-0">
+                                    <div className="flex flex-col flex-1 overflow-hidden min-h-0">
+                                        {!isPOS && (
+                                            <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+                                                <SidebarTrigger className="-ml-1" />
+                                                <Separator orientation="vertical" className="mr-2 h-4" />
+                                                <div className="flex flex-1 items-center justify-between">
+                                                    <h1 className="text-lg font-semibold">Dashboard</h1>
+                                                    <ModeToggle />
+                                                </div>
+                                            </header>
+                                        )}
+                                        <main className={cn(
+                                            "flex flex-1 flex-col min-h-0",
+                                            isPOS ? "p-0 overflow-hidden" : "p-4 gap-4 overflow-auto"
+                                        )}>
+                                            {children}
+                                        </main>
                                     </div>
-                                </header>
-                            )}
-                            <main className={cn(
-                                "flex flex-1 flex-col min-h-0",
-                                isPOS ? "p-0 overflow-hidden" : "p-4 gap-4 overflow-auto"
-                            )}>
-                                {children}
-                            </main>
-                        </div>
-                        {isPOS && <CartSidebar />}
-                    </div>
-                </SidebarInset>
-            </SidebarProvider>
-                </CartProvider>
+                                    {isPOS && <CartSidebar />}
+                                </div>
+                            </SidebarInset>
+                        </SidebarProvider>
+                    </CartProvider>
+                </BranchProvider>
             </RoleGuard>
         </RoleProvider>
     )

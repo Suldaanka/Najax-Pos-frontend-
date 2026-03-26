@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Search, Filter, MoreHorizontal, PackagePlus, Pencil, Trash2, Download } from "lucide-react";
+import { Plus, Search, Filter, MoreHorizontal, PackagePlus, Pencil, Trash2, Download, ArrowRightLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,6 +34,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { productsApi, categoriesApi, inventoryApi } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
+import { useBranch } from "@/lib/branch-context";
 import BarcodeScanner from "@/components/barcode-scanner";
 import {
     Select,
@@ -58,8 +59,16 @@ export default function ProductsPage() {
     const [isCameraOpen, setIsCameraOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
-    const [stockLogs, setStockLogs] = useState<any[]>([]);
     const [loadingLogs, setLoadingLogs] = useState(false);
+    const { currentBranchId, branches } = useBranch();
+    const [isTransferOpen, setIsTransferOpen] = useState(false);
+    const [transferForm, setTransferForm] = useState({
+        productId: "",
+        fromBranchId: "",
+        toBranchId: "",
+        quantity: 0,
+        note: ""
+    });
 
     const [addForm, setAddForm] = useState({
         name: "",
@@ -333,15 +342,41 @@ export default function ProductsPage() {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         const adjustment = parseInt(formData.get("adjustment") as string);
-        const newStock = (adjustingProduct?.stockQuantity || 0) + adjustment;
-
+    const handleAdjustStock = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!adjustingProduct) return;
+        const formData = new FormData(e.target as HTMLFormElement);
+        const adjustment = parseFloat(formData.get("adjustment") as string);
+        
         try {
-            await productsApi.adjustStock(adjustingProduct.id, { stockQuantity: newStock });
-            fetchProducts();
-            setIsAdjustOpen(false);
+            await productsApi.adjustStock(adjustingProduct.id, { 
+                stockQuantity: adjustment,
+                branchId: currentBranchId || undefined
+            });
             toast.success("Stock adjusted successfully");
+            setIsAdjustOpen(false);
+            fetchProducts();
         } catch (error: any) {
             toast.error("Failed to adjust stock: " + error.message);
+        }
+    };
+
+    const handleTransferStock = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await branchesApi.transfer(transferForm);
+            toast.success("Stock transferred successfully");
+            setIsTransferOpen(false);
+            setTransferForm({
+                productId: "",
+                fromBranchId: "",
+                toBranchId: "",
+                quantity: 0,
+                note: ""
+            });
+            fetchProducts();
+        } catch (error: any) {
+            toast.error("Transfer failed: " + error.message);
         }
     };
 
@@ -867,41 +902,60 @@ export default function ProductsPage() {
                                 <TableCell className="text-sm">${product.sellingPrice}</TableCell>
                                 <TableCell className="text-xs uppercase font-bold text-muted-foreground">{product.unit || "pcs"}</TableCell>
                                 <TableCell className="text-sm">
-                                    {product.unit === 'kg' ? (
-                                        <div className="flex flex-col">
-                                            <span className="font-bold">{product.stockQuantity} Kg</span>
-                                            {product.piecesPerBag && product.piecesPerBag > 0 && (
-                                                <span className="text-[10px] text-primary font-black uppercase tracking-tighter">
-                                                    {Math.floor(product.stockQuantity / product.piecesPerBag)} Bags, {(product.stockQuantity % product.piecesPerBag).toFixed(2)} Kg
-                                                </span>
-                                            )}
-                                        </div>
-                                    ) : product.piecesPerCarton ? (
-                                        <div className="flex flex-col">
-                                            <span>{Math.floor(product.stockQuantity / product.piecesPerCarton)} Ctns</span>
-                                            <span className="text-[10px] text-muted-foreground">{product.stockQuantity % product.piecesPerCarton} Pcs loose</span>
-                                        </div>
-                                    ) : product.piecesPerBag ? (
-                                        <div className="flex flex-col">
-                                            <span>{Math.floor(product.stockQuantity / product.piecesPerBag)} Bags</span>
-                                            <span className="text-[10px] text-muted-foreground">{product.stockQuantity % product.piecesPerBag} Pcs loose</span>
-                                        </div>
-                                    ) : (
-                                        <span>{product.stockQuantity} {product.unit || "Pcs"}</span>
-                                    )}
+                                    {(() => {
+                                        const stock = currentBranchId 
+                                            ? product.inventoryLevels?.find((il: any) => il.branchId === currentBranchId)?.stockQuantity || 0
+                                            : product.stockQuantity;
+                                        
+                                        if (product.unit === 'kg') {
+                                            return (
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold">{stock} Kg</span>
+                                                    {product.piecesPerBag && product.piecesPerBag > 0 && (
+                                                        <span className="text-[10px] text-primary font-black uppercase tracking-tighter">
+                                                            {Math.floor(stock / product.piecesPerBag)} Bags, {(stock % product.piecesPerBag).toFixed(2)} Kg
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            );
+                                        } else if (product.piecesPerCarton) {
+                                            return (
+                                                <div className="flex flex-col">
+                                                    <span>{Math.floor(stock / product.piecesPerCarton)} Ctns</span>
+                                                    <span className="text-[10px] text-muted-foreground">{stock % product.piecesPerCarton} Pcs loose</span>
+                                                </div>
+                                            );
+                                        } else if (product.piecesPerBag) {
+                                            return (
+                                                <div className="flex flex-col">
+                                                    <span>{Math.floor(stock / product.piecesPerBag)} Bags</span>
+                                                    <span className="text-[10px] text-muted-foreground">{stock % product.piecesPerBag} Pcs loose</span>
+                                                </div>
+                                            );
+                                        }
+                                        return <span>{stock} {product.unit || "Pcs"}</span>;
+                                    })()}
                                 </TableCell>
                                 <TableCell>
                                     <Badge
                                         className="text-[10px] py-0 px-2 uppercase tracking-wide"
                                         variant={
-                                            product.stockQuantity > 10
+                                            (currentBranchId 
+                                                ? product.inventoryLevels?.find((il: any) => il.branchId === currentBranchId)?.stockQuantity || 0
+                                                : product.stockQuantity) > 10
                                                 ? "default"
-                                                : product.stockQuantity > 0
+                                                : (currentBranchId 
+                                                    ? product.inventoryLevels?.find((il: any) => il.branchId === currentBranchId)?.stockQuantity || 0
+                                                    : product.stockQuantity) > 0
                                                     ? "secondary"
                                                     : "destructive"
                                         }
                                     >
-                                        {product.stockQuantity > 10 ? "In Stock" : product.stockQuantity > 0 ? "Low Stock" : "Out of Stock"}
+                                        {(currentBranchId 
+                                            ? product.inventoryLevels?.find((il: any) => il.branchId === currentBranchId)?.stockQuantity || 0
+                                            : product.stockQuantity) > 10 ? "In Stock" : (currentBranchId 
+                                            ? product.inventoryLevels?.find((il: any) => il.branchId === currentBranchId)?.stockQuantity || 0
+                                            : product.stockQuantity) > 0 ? "Low Stock" : "Out of Stock"}
                                     </Badge>
                                 </TableCell>
                                 <TableCell className="text-right">
@@ -948,6 +1002,18 @@ export default function ProductsPage() {
                                                 setIsAdjustOpen(true);
                                             }}>
                                                 <PackagePlus className="mr-2 h-4 w-4" /> Adjust Stock
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => {
+                                                setTransferForm({
+                                                    productId: product.id,
+                                                    fromBranchId: currentBranchId || "",
+                                                    toBranchId: "",
+                                                    quantity: 0,
+                                                    note: ""
+                                                });
+                                                setIsTransferOpen(true);
+                                            }}>
+                                                <ArrowRightLeft className="mr-2 h-4 w-4" /> Transfer Stock
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem
@@ -1368,7 +1434,9 @@ export default function ProductsPage() {
                                 <DialogTitle>Adjust Stock</DialogTitle>
                                 <DialogDescription>
                                     Adjust stock level for <strong>{adjustingProduct.name}</strong>.
-                                    Current stock: {adjustingProduct.stockQuantity}
+                                    Current stock (Active Branch): {currentBranchId 
+                                        ? adjustingProduct.inventoryLevels?.find((il: any) => il.branchId === currentBranchId)?.stockQuantity || 0
+                                        : adjustingProduct.stockQuantity} {adjustingProduct.unit || 'pcs'}
                                 </DialogDescription>
                             </DialogHeader>
                             <div className="grid gap-4 py-6">
@@ -1396,6 +1464,73 @@ export default function ProductsPage() {
                 </DialogContent>
             </Dialog>
 
+            <Dialog open={isTransferOpen} onOpenChange={setIsTransferOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <form onSubmit={handleTransferStock}>
+                        <DialogHeader>
+                            <DialogTitle>Transfer Stock</DialogTitle>
+                            <DialogDescription>
+                                Move inventory between branches.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-6">
+                            <div className="space-y-2">
+                                <Label>From Branch</Label>
+                                <Select 
+                                    value={transferForm.fromBranchId}
+                                    onValueChange={(val) => setTransferForm({ ...transferForm, fromBranchId: val })}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select origin branch" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {branches.map(b => (
+                                            <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>To Branch</Label>
+                                <Select 
+                                    value={transferForm.toBranchId}
+                                    onValueChange={(val) => setTransferForm({ ...transferForm, toBranchId: val })}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select destination branch" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {branches.map(b => (
+                                            <SelectItem key={b.id} value={b.id} disabled={b.id === transferForm.fromBranchId}>{b.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Quantity</Label>
+                                <Input 
+                                    type="number" 
+                                    required 
+                                    value={transferForm.quantity || ""}
+                                    onChange={(e) => setTransferForm({ ...transferForm, quantity: parseFloat(e.target.value) || 0 })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Note (Optional)</Label>
+                                <Input 
+                                    placeholder="Reason for transfer"
+                                    value={transferForm.note}
+                                    onChange={(e) => setTransferForm({ ...transferForm, note: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button type="submit">Confirm Transfer</Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
             <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
                 <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden">
                     {selectedProduct && (
@@ -1411,12 +1546,50 @@ export default function ProductsPage() {
                             <div className="flex-1 overflow-y-auto p-6 pt-2">
                                 <div className="grid grid-cols-2 gap-6 mb-6">
                                     <div className="space-y-1 bg-muted/30 p-3 rounded-lg border border-primary/5">
-                                        <p className="text-[10px] uppercase font-black text-muted-foreground/60 tracking-wider">Current Stock</p>
+                                        <p className="text-[10px] uppercase font-black text-muted-foreground/60 tracking-wider">Total Global Stock</p>
                                         <p className="text-2xl font-black text-primary">{selectedProduct.stockQuantity} <span className="text-sm font-normal text-muted-foreground">{selectedProduct.unit || 'pcs'}</span></p>
                                     </div>
                                     <div className="space-y-1 bg-muted/30 p-3 rounded-lg border border-primary/5">
                                         <p className="text-[10px] uppercase font-black text-muted-foreground/60 tracking-wider">Selling Price</p>
                                         <p className="text-2xl font-black text-primary">${selectedProduct.sellingPrice}</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4 mb-6">
+                                    <div className="flex items-center justify-between border-b pb-1">
+                                        <h3 className="text-xs font-black uppercase text-muted-foreground tracking-widest flex items-center gap-2">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                                            Branch Stock Breakdown
+                                        </h3>
+                                    </div>
+                                    <div className="rounded-xl border bg-card overflow-hidden">
+                                        <Table>
+                                            <TableHeader className="bg-muted/50">
+                                                <TableRow className="hover:bg-transparent">
+                                                    <TableHead className="h-8 text-[10px] font-black uppercase">Branch</TableHead>
+                                                    <TableHead className="h-8 text-[10px] font-black uppercase">Stock Level</TableHead>
+                                                    <TableHead className="h-8 text-[10px] font-black uppercase">Status</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {selectedProduct.inventoryLevels?.map((il: any) => (
+                                                    <TableRow key={il.id}>
+                                                        <TableCell className="py-2 text-xs font-bold">{il.branch?.name}</TableCell>
+                                                        <TableCell className="py-2 text-xs font-black text-primary">{il.stockQuantity} {selectedProduct.unit}</TableCell>
+                                                        <TableCell className="py-2">
+                                                            <Badge variant={il.stockQuantity > 10 ? "default" : il.stockQuantity > 0 ? "outline" : "destructive"} className="text-[8px] py-0 px-1 font-black uppercase">
+                                                                {il.stockQuantity > 10 ? "Good" : il.stockQuantity > 0 ? "Low" : "Out"}
+                                                            </Badge>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                                {(!selectedProduct.inventoryLevels || selectedProduct.inventoryLevels.length === 0) && (
+                                                    <TableRow>
+                                                        <TableCell colSpan={3} className="text-center py-4 text-xs text-muted-foreground italic">No branch inventory recorded.</TableCell>
+                                                    </TableRow>
+                                                )}
+                                            </TableBody>
+                                        </Table>
                                     </div>
                                 </div>
 

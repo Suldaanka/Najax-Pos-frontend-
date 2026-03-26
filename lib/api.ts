@@ -43,7 +43,7 @@ export const productsApi = {
     getAll: (businessId: string) => apiFetch(`/products?businessId=${businessId}`),
     create: (data: any) => apiFetch('/products', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: any) => apiFetch(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-    adjustStock: (id: string, data: { stockQuantity: number }) => apiFetch(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    adjustStock: (id: string, data: { stockQuantity: number, branchId?: string }) => apiFetch(`/products/${id}/adjust-stock`, { method: 'PATCH', body: JSON.stringify(data) }),
     delete: (id: string) => apiFetch(`/products/${id}`, { method: 'DELETE' }),
 };
 
@@ -131,4 +131,15 @@ export const subscriptionsApi = {
     getStatus: () => apiFetch('/subscriptions/status'),
     pay: (data: any) => apiFetch('/subscriptions/pay', { method: 'POST', body: JSON.stringify(data) }),
     verify: (id: string) => apiFetch(`/subscriptions/verify/${id}`),
+};
+
+export const branchesApi = {
+    getAll: () => apiFetch('/branches'),
+    create: (data: any) => apiFetch('/branches', { method: 'POST', body: JSON.stringify(data) }),
+    transfer: (data: any) => apiFetch('/branches/transfer', { method: 'POST', body: JSON.stringify(data) }),
+};
+
+export const refundsApi = {
+    getAll: () => apiFetch('/refunds'),
+    create: (data: any) => apiFetch('/refunds', { method: 'POST', body: JSON.stringify(data) }),
 };
