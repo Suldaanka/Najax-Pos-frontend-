@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { productsApi, categoriesApi, inventoryApi } from "@/lib/api";
+import { productsApi, categoriesApi, inventoryApi, branchesApi } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { useBranch } from "@/lib/branch-context";
 import BarcodeScanner from "@/components/barcode-scanner";
