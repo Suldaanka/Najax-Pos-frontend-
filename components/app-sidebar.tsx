@@ -16,6 +16,7 @@ import {
   Repeat,
   ShoppingBag,
   ShieldAlert,
+  Store,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
