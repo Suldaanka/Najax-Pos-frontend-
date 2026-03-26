@@ -338,10 +338,6 @@ export default function ProductsPage() {
         }
     };
 
-    const handleAdjustStock = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        const adjustment = parseInt(formData.get("adjustment") as string);
     const handleAdjustStock = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!adjustingProduct) return;
