@@ -32,7 +32,7 @@ export default function POSPage() {
     const [selectedCategory, setSelectedCategory] = useState<string>("All");
     const [isCameraOpen, setIsCameraOpen] = useState(false);
     const { isCartOpen, setIsCartOpen, addToCart, cart } = useCart();
-    const { currentBranchId } = useBranch();
+    const { currentBranchId, currentBranch } = useBranch();
 
     // Shared beep sound for every item added (click or scan)
     const playBeep = () => {
@@ -137,9 +137,10 @@ export default function POSPage() {
                 if (buffer.length > 2) {
                     const product = products.find(p => p.barcode === buffer);
                     if (product) {
-                        const stock = currentBranchId 
-                            ? product.inventoryLevels?.find((il: any) => il.branchId === currentBranchId)?.stockQuantity || 0
-                            : product.stockQuantity;
+                        const il = currentBranchId 
+                            ? product.inventoryLevels?.find((il: any) => il.branchId === currentBranchId)
+                            : null;
+                        const stock = Number(il ? il.stockQuantity : (product.stockQuantity || 0));
                         
                         if (stock > 0) {
                             addToCart(product);
@@ -169,7 +170,18 @@ export default function POSPage() {
                 <SidebarTrigger className="-ml-1" />
                 <Separator orientation="vertical" className="mr-2 h-4" />
                 <div className="flex flex-1 items-center justify-between">
-                    <h1 className="text-lg font-semibold">POS Terminal</h1>
+                    <div className="flex flex-col">
+                        <h1 className="text-lg font-black uppercase tracking-tight">POS Terminal</h1>
+                        {currentBranch && (
+                            <div className="flex items-center gap-1.5 -mt-1">
+                                <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
+                                    {currentBranch.name} 
+                                    {currentBranch.isMain && <span className="ml-1 text-[8px] bg-primary/10 text-primary px-1 rounded">Main</span>}
+                                </span>
+                            </div>
+                        )}
+                    </div>
                     <div className="flex items-center gap-2">
                         <Button
                             variant="outline"
@@ -241,9 +253,10 @@ export default function POSPage() {
 
                                         const product = products.find(p => p.barcode === text);
                                         if (product) {
-                                            const stock = currentBranchId 
-                                                ? product.inventoryLevels?.find((il: any) => il.branchId === currentBranchId)?.stockQuantity || 0
-                                                : product.stockQuantity;
+                                            const il = currentBranchId 
+                                                ? product.inventoryLevels?.find((il: any) => il.branchId === currentBranchId)
+                                                : null;
+                                            const stock = Number(il ? il.stockQuantity : (product.stockQuantity || 0));
 
                                             if (stock > 0) {
                                                 addToCart(product);
@@ -311,9 +324,10 @@ export default function POSPage() {
                 <ScrollArea className="flex-1 min-h-0 px-6">
                     <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 py-4 pb-6">
                         {filteredProducts.map((product) => {
-                            const stock = currentBranchId 
-                                ? product.inventoryLevels?.find((il: any) => il.branchId === currentBranchId)?.stockQuantity || 0
-                                : product.stockQuantity;
+                            const il = currentBranchId 
+                                ? product.inventoryLevels?.find((il: any) => il.branchId === currentBranchId)
+                                : null;
+                            const stock = Number(il ? il.stockQuantity : (product.stockQuantity || 0));
 
                             return (
                             <div
