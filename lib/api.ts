@@ -137,6 +137,7 @@ export const branchesApi = {
     getAll: () => apiFetch('/branches'),
     create: (data: any) => apiFetch('/branches', { method: 'POST', body: JSON.stringify(data) }),
     transfer: (data: any) => apiFetch('/branches/transfer', { method: 'POST', body: JSON.stringify(data) }),
+    setMain: (id: string) => apiFetch(`/branches/${id}/set-main`, { method: 'PATCH' }),
 };
 
 export const refundsApi = {

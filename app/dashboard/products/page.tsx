@@ -398,25 +398,66 @@ export default function ProductsPage() {
             setLoadingLogs(false);
         }
     };
+    const [loadingLogs, setLoadingLogs] = useState(false);
+    const [stockLogs, setStockLogs] = useState<any[]>([]);
+    const [stockView, setStockView] = useState<'branch' | 'global'>('branch');
+    const { currentBranchId, branches, currentBranch } = useBranch();
+    const [isTransferOpen, setIsTransferOpen] = useState(false);
 
     return (
         <div className="flex flex-col gap-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-                        Products
-                        <Badge variant="outline" className="text-[10px] font-black bg-primary/10 text-primary border-primary/20 animate-pulse">v2.0 ENTERPRISE</Badge>
-                    </h2>
-                    <p className="text-muted-foreground">
-                        Manage your inventory and product listings.
-                    </p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card/50 p-6 rounded-3xl border shadow-sm">
+                <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                        <PackagePlus className="h-6 w-6" />
+                    </div>
+                    <div>
+                        <h2 className="text-2xl font-black tracking-tight flex items-center gap-2 uppercase">
+                            Inventory
+                            <Badge variant="outline" className="text-[10px] font-black bg-primary/10 text-primary border-primary/20">v2.1</Badge>
+                        </h2>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                            <span className="text-xs font-bold uppercase tracking-wider opacity-70">Context:</span>
+                            <Badge variant="secondary" className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md flex items-center gap-1.5 border-primary/10">
+                                {currentBranch ? (
+                                    <>
+                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                                        {currentBranch.name} 
+                                        {currentBranch.isMain && <span className="text-[8px] bg-primary text-primary-foreground px-1 rounded ml-1">MAIN</span>}
+                                    </>
+                                ) : (
+                                    "Loading..."
+                                )}
+                            </Badge>
+                        </div>
+                    </div>
                 </div>
-                <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={handleExportExcel} className="h-9 px-4 rounded-lg border-primary/20 hover:bg-primary/5">
-                        <Download className="mr-2 h-4 w-4 text-primary" /> Export Excel
+
+                <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center bg-muted/50 p-1 rounded-xl border border-primary/5">
+                        <Button 
+                            variant={stockView === 'branch' ? "default" : "ghost"} 
+                            size="sm" 
+                            className="h-8 text-[10px] font-black uppercase px-3 rounded-lg"
+                            onClick={() => setStockView('branch')}
+                        >
+                            Branch View
+                        </Button>
+                        <Button 
+                            variant={stockView === 'global' ? "default" : "ghost"} 
+                            size="sm" 
+                            className="h-8 text-[10px] font-black uppercase px-3 rounded-lg"
+                            onClick={() => setStockView('global')}
+                        >
+                            Global View
+                        </Button>
+                    </div>
+                    <div className="h-8 w-[1px] bg-border mx-1 hidden md:block" />
+                    <Button variant="outline" size="sm" onClick={handleExportExcel} className="h-9 px-4 rounded-xl border-primary/10 hover:bg-primary/5 text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95">
+                        <Download className="mr-2 h-4 w-4 text-primary" /> Excel
                     </Button>
-                    <Button variant="outline" size="sm" onClick={handleExportPDF} className="h-9 px-4 rounded-lg border-primary/20 hover:bg-primary/5">
-                        <Download className="mr-2 h-4 w-4 text-primary" /> Export PDF
+                    <Button variant="outline" size="sm" onClick={handleExportPDF} className="h-9 px-4 rounded-xl border-primary/10 hover:bg-primary/5 text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95">
+                        <Download className="mr-2 h-4 w-4 text-primary" /> PDF
                     </Button>
                     <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                         <DialogTrigger asChild>
@@ -900,7 +941,7 @@ export default function ProductsPage() {
                                 <TableCell className="text-xs uppercase font-bold text-muted-foreground">{product.unit || "pcs"}</TableCell>
                                 <TableCell className="text-sm">
                                     {(() => {
-                                        const stock = currentBranchId 
+                                        const stock = (stockView === 'branch' && currentBranchId)
                                             ? product.inventoryLevels?.find((il: any) => il.branchId === currentBranchId)?.stockQuantity || 0
                                             : product.stockQuantity;
                                         
@@ -937,20 +978,20 @@ export default function ProductsPage() {
                                     <Badge
                                         className="text-[10px] py-0 px-2 uppercase tracking-wide"
                                         variant={
-                                            (currentBranchId 
+                                            ((stockView === 'branch' && currentBranchId)
                                                 ? product.inventoryLevels?.find((il: any) => il.branchId === currentBranchId)?.stockQuantity || 0
                                                 : product.stockQuantity) > 10
                                                 ? "default"
-                                                : (currentBranchId 
+                                                : ((stockView === 'branch' && currentBranchId)
                                                     ? product.inventoryLevels?.find((il: any) => il.branchId === currentBranchId)?.stockQuantity || 0
                                                     : product.stockQuantity) > 0
                                                     ? "secondary"
                                                     : "destructive"
                                         }
                                     >
-                                        {(currentBranchId 
+                                        {((stockView === 'branch' && currentBranchId)
                                             ? product.inventoryLevels?.find((il: any) => il.branchId === currentBranchId)?.stockQuantity || 0
-                                            : product.stockQuantity) > 10 ? "In Stock" : (currentBranchId 
+                                            : product.stockQuantity) > 10 ? "In Stock" : ((stockView === 'branch' && currentBranchId)
                                             ? product.inventoryLevels?.find((il: any) => il.branchId === currentBranchId)?.stockQuantity || 0
                                             : product.stockQuantity) > 0 ? "Low Stock" : "Out of Stock"}
                                     </Badge>

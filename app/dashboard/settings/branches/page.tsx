@@ -56,6 +56,17 @@ export default function BranchesPage() {
     }
   };
 
+  const handleSetMain = async (id: string) => {
+    try {
+      await branchesApi.setMain(id);
+      toast.success("Main branch updated");
+      refreshBranches();
+    } catch (error) {
+      console.error("Failed to set main branch:", error);
+      toast.error("Failed to update main branch");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -122,13 +133,12 @@ export default function BranchesPage() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                   <Store className="h-6 w-6" />
                 </div>
-                {branch.isMain && (
-                  <div className="bg-primary/20 text-primary px-3 py-1 rounded-full flex items-center gap-1.5">
+                {branch.isMain ? (
+                  <div className="bg-primary text-primary-foreground px-3 py-1 rounded-full flex items-center gap-1.5 shadow-lg shadow-primary/20">
                     <CheckCircle2 className="h-3 w-3" />
                     <span className="text-[10px] font-black uppercase tracking-widest">Main Branch</span>
                   </div>
-                )}
-                {!branch.isMain && (
+                ) : (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -136,10 +146,13 @@ export default function BranchesPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem className="text-[10px] font-black uppercase tracking-widest">
+                      <DropdownMenuItem 
+                        onClick={() => handleSetMain(branch.id)}
+                        className="text-[10px] font-black uppercase tracking-widest cursor-pointer"
+                      >
                         Set as Main
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="text-[10px] font-black uppercase tracking-widest text-destructive">
+                      <DropdownMenuItem className="text-[10px] font-black uppercase tracking-widest text-destructive cursor-pointer">
                         Delete Branch
                       </DropdownMenuItem>
                     </DropdownMenuContent>
