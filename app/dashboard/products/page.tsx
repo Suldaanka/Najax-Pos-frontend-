@@ -61,7 +61,8 @@ export default function ProductsPage() {
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [loadingLogs, setLoadingLogs] = useState(false);
     const [stockLogs, setStockLogs] = useState<any[]>([]);
-    const { currentBranchId, branches } = useBranch();
+    const [stockView, setStockView] = useState<'branch' | 'global'>('branch');
+    const { currentBranchId, branches, currentBranch } = useBranch();
     const [isTransferOpen, setIsTransferOpen] = useState(false);
     const [transferForm, setTransferForm] = useState({
         productId: "",
@@ -398,11 +399,6 @@ export default function ProductsPage() {
             setLoadingLogs(false);
         }
     };
-    const [loadingLogs, setLoadingLogs] = useState(false);
-    const [stockLogs, setStockLogs] = useState<any[]>([]);
-    const [stockView, setStockView] = useState<'branch' | 'global'>('branch');
-    const { currentBranchId, branches, currentBranch } = useBranch();
-    const [isTransferOpen, setIsTransferOpen] = useState(false);
 
     return (
         <div className="flex flex-col gap-6">
