@@ -167,7 +167,7 @@ export default function RefundsPage() {
                 <CardHeader className="bg-primary/5 border-b">
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle className="text-xl font-black uppercase tracking-tight">Sale #{sale.id.slice(-6).toUpperCase()}</CardTitle>
+                      <CardTitle className="text-xl font-black uppercase tracking-tight">Sale #{sale?.id?.slice(-6).toUpperCase()}</CardTitle>
                       <CardDescription className="font-bold uppercase tracking-widest text-[10px]">
                         Date: {new Date(sale.createdAt).toLocaleString()}
                       </CardDescription>
@@ -276,8 +276,8 @@ export default function RefundsPage() {
             <TableBody>
               {history.map((refund) => (
                 <TableRow key={refund.id}>
-                  <TableCell className="font-mono text-[10px]">#{refund.id.slice(-6).toUpperCase()}</TableCell>
-                  <TableCell className="font-mono text-[10px]">#{refund.saleId.slice(-6).toUpperCase()}</TableCell>
+                  <TableCell className="font-mono text-[10px]">#{refund?.id?.slice(-6).toUpperCase()}</TableCell>
+                  <TableCell className="font-mono text-[10px]">#{refund?.saleId?.slice(-6).toUpperCase()}</TableCell>
                   <TableCell className="font-black text-destructive">-${Number(refund.totalAmount).toFixed(2)}</TableCell>
                   <TableCell className="text-[11px] font-bold uppercase">{new Date(refund.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell className="text-xs italic text-muted-foreground">{refund.reason || "N/A"}</TableCell>
