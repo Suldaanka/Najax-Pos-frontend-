@@ -45,7 +45,7 @@ export default function RefundsPage() {
     setRefundItems({});
     try {
       // Find sale by ID (we might need a specific "getSale" endpoint if it doesn't exist)
-      const data = await apiFetch(`/sales/${searchQuery}`);
+      const data = await salesApi.getOne(searchQuery);
       setSale(data);
       // Initialize refund quantities to 0
       const items: Record<string, number> = {};

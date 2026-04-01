@@ -43,9 +43,9 @@ export const productsApi = {
     getAll: (businessId: string, branchId?: string | null) => 
         apiFetch(`/products?businessId=${businessId}${branchId ? `&branchId=${branchId}` : ''}`),
     create: (data: any) => apiFetch('/products', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id: string, data: any) => apiFetch(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-    adjustStock: (id: string, data: { stockQuantity: number, branchId?: string }) => apiFetch(`/products/${id}/adjust-stock`, { method: 'PATCH', body: JSON.stringify(data) }),
-    delete: (id: string) => apiFetch(`/products/${id}`, { method: 'DELETE' }),
+    update: (id: string, data: any) => apiFetch(`/products/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) }),
+    adjustStock: (id: string, data: { stockQuantity: number, branchId?: string }) => apiFetch(`/products/${encodeURIComponent(id)}/adjust-stock`, { method: 'PATCH', body: JSON.stringify(data) }),
+    delete: (id: string) => apiFetch(`/products/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 };
 
 export const staffApi = {
@@ -53,39 +53,40 @@ export const staffApi = {
         apiFetch(`/staff?businessId=${businessId}${branchId ? `&branchId=${branchId}` : ''}`),
     getPerformance: (businessId: string, branchId?: string | null) => 
         apiFetch(`/staff/performance?businessId=${businessId}${branchId ? `&branchId=${branchId}` : ''}`),
-    updateRole: (userId: string, role: string) => apiFetch(`/business/users/${userId}/role`, { method: 'PUT', body: JSON.stringify({ role }) }),
-    remove: (id: string) => apiFetch(`/staff/${id}`, { method: 'DELETE' }),
+    updateRole: (userId: string, role: string) => apiFetch(`/business/users/${encodeURIComponent(userId)}/role`, { method: 'PUT', body: JSON.stringify({ role }) }),
+    remove: (id: string) => apiFetch(`/staff/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 };
 
 export const expensesApi = {
     getAll: (businessId: string, branchId?: string | null) => 
         apiFetch(`/expenses?businessId=${businessId}${branchId ? `&branchId=${branchId}` : ''}`),
     create: (data: any) => apiFetch('/expenses', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id: string, data: any) => apiFetch(`/expenses/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-    delete: (id: string) => apiFetch(`/expenses/${id}`, { method: 'DELETE' }),
+    update: (id: string, data: any) => apiFetch(`/expenses/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id: string) => apiFetch(`/expenses/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 };
 
 export const salesApi = {
     getAll: (branchId?: string | null) => 
         apiFetch(`/sales${branchId ? `?branchId=${branchId}` : ''}`),
-    delete: (id: string) => apiFetch(`/sales/${id}`, { method: 'DELETE' }),
+    getOne: (id: string) => apiFetch(`/sales/${encodeURIComponent(id)}`),
+    delete: (id: string) => apiFetch(`/sales/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 };
 
 export const customersApi = {
     getAll: (businessId: string, branchId?: string | null) => 
         apiFetch(`/customers?businessId=${businessId}${branchId ? `&branchId=${branchId}` : ''}`),
-    getOne: (id: string) => apiFetch(`/customers/${id}`),
+    getOne: (id: string) => apiFetch(`/customers/${encodeURIComponent(id)}`),
     create: (data: any) => apiFetch('/customers', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id: string, data: any) => apiFetch(`/customers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-    delete: (id: string) => apiFetch(`/customers/${id}`, { method: 'DELETE' }),
+    update: (id: string, data: any) => apiFetch(`/customers/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id: string) => apiFetch(`/customers/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 };
 
 export const loansApi = {
     getAll: (branchId?: string | null) => 
         apiFetch(`/loans${branchId ? `?branchId=${branchId}` : ''}`),
     create: (data: any) => apiFetch('/loans', { method: 'POST', body: JSON.stringify(data) }),
-    recordPayment: (id: string, data: any) => apiFetch(`/loans/${id}/payments`, { method: 'POST', body: JSON.stringify(data) }),
-    updateStatus: (id: string, status: string) => apiFetch(`/loans/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+    recordPayment: (id: string, data: any) => apiFetch(`/loans/${encodeURIComponent(id)}/payments`, { method: 'POST', body: JSON.stringify(data) }),
+    updateStatus: (id: string, status: string) => apiFetch(`/loans/${encodeURIComponent(id)}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
 };
 
 export const businessApi = {
@@ -99,14 +100,14 @@ export const businessApi = {
 export const categoriesApi = {
     getAll: (businessId: string) => apiFetch(`/categories?businessId=${businessId}`),
     create: (data: any) => apiFetch('/categories', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id: string, data: any) => apiFetch(`/categories/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-    delete: (id: string) => apiFetch(`/categories/${id}`, { method: 'DELETE' }),
+    update: (id: string, data: any) => apiFetch(`/categories/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id: string) => apiFetch(`/categories/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 };
 
 export const recurringExpensesApi = {
     getAll: () => apiFetch('/recurring-expenses'),
     create: (data: any) => apiFetch('/recurring-expenses', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id: string, data: any) => apiFetch(`/recurring-expenses/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    update: (id: string, data: any) => apiFetch(`/recurring-expenses/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (id: string) => apiFetch(`/recurring-expenses/${id}`, { method: 'DELETE' }),
 };
 
@@ -128,34 +129,34 @@ export const inventoryApi = {
     // Suppliers
     getSuppliers: () => apiFetch('/inventory/suppliers'),
     createSupplier: (data: any) => apiFetch('/inventory/suppliers', { method: 'POST', body: JSON.stringify(data) }),
-    updateSupplier: (id: string, data: any) => apiFetch(`/inventory/suppliers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-    deleteSupplier: (id: string) => apiFetch(`/inventory/suppliers/${id}`, { method: 'DELETE' }),
+    updateSupplier: (id: string, data: any) => apiFetch(`/inventory/suppliers/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteSupplier: (id: string) => apiFetch(`/inventory/suppliers/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 
     // Purchases
     getPurchases: (branchId?: string | null) => 
         apiFetch(`/inventory/purchases${branchId ? `?branchId=${branchId}` : ''}`),
     createPurchase: (data: any) => apiFetch('/inventory/purchases', { method: 'POST', body: JSON.stringify(data) }),
-    deletePurchase: (id: string) => apiFetch(`/inventory/purchases/${id}`, { method: 'DELETE' }),
+    deletePurchase: (id: string) => apiFetch(`/inventory/purchases/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 
     // Exchange Rates
     getExchangeRates: () => apiFetch('/inventory/exchange-rates'),
     updateExchangeRate: (data: any) => apiFetch('/inventory/exchange-rates', { method: 'POST', body: JSON.stringify(data) }),
 
     // Stock Logs
-    getStockLogs: (productId?: string) => apiFetch(productId ? `/inventory/stock-logs/${productId}` : '/inventory/stock-logs'),
+    getStockLogs: (productId?: string) => apiFetch(productId ? `/inventory/stock-logs/${encodeURIComponent(productId)}` : '/inventory/stock-logs'),
 };
 
 export const subscriptionsApi = {
     getStatus: () => apiFetch('/subscriptions/status'),
     pay: (data: any) => apiFetch('/subscriptions/pay', { method: 'POST', body: JSON.stringify(data) }),
-    verify: (id: string) => apiFetch(`/subscriptions/verify/${id}`),
+    verify: (id: string) => apiFetch(`/subscriptions/verify/${encodeURIComponent(id)}`),
 };
 
 export const branchesApi = {
     getAll: () => apiFetch('/branches'),
     create: (data: any) => apiFetch('/branches', { method: 'POST', body: JSON.stringify(data) }),
     transfer: (data: any) => apiFetch('/branches/transfer', { method: 'POST', body: JSON.stringify(data) }),
-    setMain: (id: string) => apiFetch(`/branches/${id}/set-main`, { method: 'PATCH' }),
+    setMain: (id: string) => apiFetch(`/branches/${encodeURIComponent(id)}/set-main`, { method: 'PATCH' }),
 };
 
 export const refundsApi = {
