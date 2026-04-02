@@ -169,16 +169,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                 }))
             };
 
-            await apiFetch("/sales", {
+            const result = await apiFetch("/sales", {
                 method: 'POST',
                 body: JSON.stringify(saleData)
             });
 
             setCart([]);
             toast.success("Checkout completed successfully!");
+            return result; // Return the created sale object
         } catch (error) {
             console.error("Checkout error:", error);
             toast.error("Checkout failed");
+            throw error; // Re-throw to allow component to handle failure
         } finally {
             setIsCheckingOut(false);
         }

@@ -15,9 +15,12 @@ import { cn } from "@/lib/utils";
 import { useCart } from "@/lib/cart-context";
 import { toast } from "sonner";
 import { usePathname } from "next/navigation";
+import { useSession } from "@/lib/auth-client";
+import { printReceipt } from "@/lib/print-utils";
 
 export function CartSidebar() {
     const pathname = usePathname();
+    const { data: session } = useSession();
     const isPOS = pathname === "/dashboard/pos";
     const {
         cart,
@@ -324,7 +327,18 @@ export function CartSidebar() {
                     <Button
                         className="w-full h-12 rounded-none bg-primary text-primary-foreground text-xs font-black shadow-lg shadow-primary/10 hover:bg-primary/90 transition-all disabled:opacity-50 uppercase tracking-[0.2em]"
                         disabled={cart.length === 0 || isCheckingOut}
-                        onClick={handleCheckout}
+                        onClick={async () => {
+                            try {
+                                const sale = await handleCheckout();
+                                if (sale) {
+                                    // Print receipt immediately
+                                    const bizName = (session?.user as any)?.activeBusinessName || (session?.user as any)?.activeBusiness?.name || "NAJAX POS";
+                                    printReceipt(sale, bizName);
+                                }
+                            } catch (e) {
+                                // Error already handled in context
+                            }
+                        }}
                     >
                         {isCheckingOut ? (
                             <div className="flex items-center gap-2">

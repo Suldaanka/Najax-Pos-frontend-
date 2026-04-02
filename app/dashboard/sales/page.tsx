@@ -36,6 +36,7 @@ import { useSession } from "@/lib/auth-client";
 import { customersApi, salesApi } from "@/lib/api";
 import { exportToExcel, exportToPDF } from "@/lib/export-utils";
 import { useBranch } from "@/lib/branch-context";
+import { printReceipt } from "@/lib/print-utils";
 
 export default function SalesPage() {
     const { data: session } = useSession();
@@ -100,62 +101,8 @@ export default function SalesPage() {
     };
 
     const handlePrintReceipt = (sale: any) => {
-        const printWindow = window.open('', '_blank', 'width=600,height=600');
-        if (!printWindow) return;
-
-        const receiptHtml = `
-            <html>
-                <head>
-                    <title>Receipt - #${sale.id.slice(-6).toUpperCase()}</title>
-                    <style>
-                        body { font-family: 'Courier New', Courier, monospace; width: 300px; margin: 0 auto; padding: 20px; }
-                        h1 { text-align: center; font-size: 18px; margin-bottom: 5px; }
-                        p { font-size: 12px; margin: 2px 0; }
-                        .separator { border-top: 1px dashed #000; margin: 10px 0; }
-                        .total { font-weight: bold; font-size: 14px; text-align: right; }
-                        table { width: 100%; font-size: 12px; border-collapse: collapse; }
-                        th { text-align: left; border-bottom: 1px solid #000; }
-                        td { padding: 5px 0; }
-                        .center { text-align: center; }
-                    </style>
-                </head>
-                <body>
-                    <h1>${(session?.user as any)?.activeBusinessName || "NAJAX POS"}</h1>
-                    <p class="center">Receipt #${sale.id.slice(-6).toUpperCase()}</p>
-                    <p class="center">${new Date(sale.createdAt).toLocaleString()}</p>
-                    <div class="separator"></div>
-                    <p>Customer: ${sale.customer?.name || "Cash Customer"}</p>
-                    <div class="separator"></div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Item</th>
-                                <th>Qty</th>
-                                <th>Price</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${sale.items?.map((item: any) => `
-                                <tr>
-                                    <td>${item.product?.name}</td>
-                                    <td>${item.quantity}</td>
-                                    <td>$${Number(item.price).toFixed(2)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                    <div class="separator"></div>
-                    <p class="total">Total: $${Number(sale.totalAmount).toFixed(2)}</p>
-                    <p>Payment: ${sale.paymentMethod || "CASH"} (${sale.type === 'CASH' ? 'PAID' : 'LOAN'})</p>
-                    <div class="separator"></div>
-                    <p class="center">THANK YOU FOR YOUR BUSINESS!</p>
-                    <script>window.print(); window.close();</script>
-                </body>
-            </html>
-        `;
-
-        printWindow.document.write(receiptHtml);
-        printWindow.document.close();
+        const bizName = (session?.user as any)?.activeBusinessName || (session?.user as any)?.activeBusiness?.name || "NAJAX POS";
+        printReceipt(sale, bizName);
     };
 
     const filteredSales = sales.filter(sale =>
