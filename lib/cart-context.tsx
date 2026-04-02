@@ -34,7 +34,7 @@ interface CartContextType {
     addToCart: (product: any) => void;
     updateQuantity: (id: string, delta: number) => void;
     removeFromCart: (id: string) => void;
-    handleCheckout: () => Promise<void>;
+    handleCheckout: () => Promise<any>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -136,7 +136,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setCart(prev => prev.filter(item => item.id !== id));
     }, []);
 
-    const handleCheckout = async () => {
+    const handleCheckout = async (): Promise<any> => {
         if (cart.length === 0) {
             toast.error("Cart is empty");
             return;

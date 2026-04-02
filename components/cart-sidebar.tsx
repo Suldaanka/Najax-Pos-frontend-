@@ -330,7 +330,7 @@ export function CartSidebar() {
                         onClick={async () => {
                             try {
                                 const sale = await handleCheckout();
-                                if (sale) {
+                                if (sale as any) {
                                     // Print receipt immediately
                                     const bizName = (session?.user as any)?.activeBusinessName || (session?.user as any)?.activeBusiness?.name || "NAJAX POS";
                                     printReceipt(sale, bizName);
